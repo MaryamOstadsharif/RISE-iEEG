@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+# save path
+sp = "F:/maryam_sh/General model/plots/comparison_models_"
 # 'Question_Answer' & 'Singing_Music' & 'Speech_Music'
 task = 'Singing_Music'
 # number of folds for dataset: 'audio_visual' & 'under_sampling'=20 ,
@@ -54,4 +56,4 @@ ax.set_title(('Multi patients models(' + task + '_' + balancing + ') in ' + str(
 
 # Show the plot
 # plt.show()
-fig.savefig("F:/maryam_sh/General model/plots/comparison_models22222_" + task + '_' + balancing)
+fig.savefig(sp + task + '_' + balancing)
