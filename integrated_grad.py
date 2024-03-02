@@ -1,17 +1,18 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from htnet_model import *
+from GNCNN_model import *
 from model_utils import load_data
 import numpy as np
 
 
 class IG:
-    def __init__(self, data, label, model, num_patient):
+    def __init__(self, data, label, model, num_patient,patient):
         self.data = data
         self.model = model
         self.label = label
         self.baseline = tf.zeros(shape=data.shape, dtype=data.dtype)
         self.num_patient=num_patient
+        self.patient=patient
 
     def compute_integrated_grad(self):
         attributions = self.integrated_gradients(m_steps=240, batch_size=1)
@@ -32,9 +33,10 @@ class IG:
             # logits = model(self.data)
             # probs = tf.nn.softmax(logits, axis=-1)[:, self.label]
             zeros_input = tf.zeros_like(interpolate_data)
-            data_in = [interpolate_data]
-            for _ in range(self.num_patient - 1):
+            data_in = []
+            for _ in range(self.num_patient):
                 data_in.append(zeros_input)
+            data_in[self.patient] = interpolate_data
             probs = self.model(data_in)[:, self.label]
         return tape.gradient(probs, interpolate_data)
 
@@ -85,15 +87,12 @@ for patient in range(len(data_all_input)):
         data_event = np.transpose(data_event, (0, 2, 1))
         data_event = np.expand_dims(data_event, 1)
         zeros_input = np.zeros_like(data_event)
-        data_in = [data_event]
-        for _ in range(num_patient - 1):
-            data_in.append(zeros_input)
         model = tf.keras.models.load_model(path_model)
         label = int(labels[event])
 
-        integrate_grad = IG(data=tf.convert_to_tensor(data_event), label=label, model=model, num_patient=num_patient)
+        integrate_grad = IG(data=tf.convert_to_tensor(data_event), label=label, model=model, num_patient=num_patient,patient=patient)
         IG_one.append(integrate_grad.compute_integrated_grad()[0,0,:,:])
     IG_all.append(IG_one)
 
-np.save('F:/maryam_sh/integrated_grad/Ig_over_29p.npy', IG_all)
+np.save('F:/maryam_sh/integrated_grad/Ig_oversampling_29p.npy', IG_all)
 print('end')

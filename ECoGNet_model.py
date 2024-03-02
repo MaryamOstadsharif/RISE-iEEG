@@ -9,7 +9,7 @@ from keras.constraints import max_norm
 import tensorflow as tf
 
 
-def GNCNN(nb_classes, Chans, Samples,dropoutRate, kernLength, F1, n_ROI,D, F2, dropoutType,kernLength_sep,num_patient,
+def ECoGNet(nb_classes, Chans, Samples,dropoutRate, kernLength, F1, n_ROI,D, F2, dropoutType,kernLength_sep,num_input,
           norm_rate=0.25):
     """
     Keras model for HTNet, which implements EEGNet with custom layers that implement
@@ -43,7 +43,7 @@ def GNCNN(nb_classes, Chans, Samples,dropoutRate, kernLength, F1, n_ROI,D, F2, d
 
     input_all = []
     block11 = []
-    for i in range(num_patient):
+    for i in range(num_input):
         input_all.append(Input(shape=(1, Samples, Chans)))
         block11.append(tf.transpose(Dense(n_ROI, kernel_constraint=max_norm(norm_rate))(input_all[i]),
                                     (0, 1, 3, 2)))
@@ -52,7 +52,7 @@ def GNCNN(nb_classes, Chans, Samples,dropoutRate, kernLength, F1, n_ROI,D, F2, d
 
     ##################################################################
     block1 = Conv2D(F1, (1, kernLength), padding='same',
-                    input_shape=(num_patient, n_ROI, Samples),
+                    input_shape=(num_input, n_ROI, Samples),
                     use_bias=False,
                     data_format="channels_first")(block22)
 

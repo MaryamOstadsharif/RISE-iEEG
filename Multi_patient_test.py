@@ -24,27 +24,29 @@ warnings.simplefilter(action='ignore', category=RuntimeWarning)
 
 
 class MultiPatient_model:
-    def __init__(self, settings, paths):
-        self.sp = paths.path_results
-        self.num_patient = settings['num_patient']
-        self.n_ROI = settings['n_ROI']
-        self.task = settings['task']
-        self.dropoutRate = settings['hyper_param']['dropoutRate']
-        self.kernLength = settings['hyper_param']['kernLength']
-        self.F1 = settings['hyper_param']['F1']
-        self.D = settings['hyper_param']['D']
-        self.F2 = settings['hyper_param']['F1'] * settings['hyper_param']['D']
-        self.dropoutType = settings['hyper_param']['dropoutType']
-        self.kernLength_sep = settings['hyper_param']['kernLength_sep']
-        self.loss = settings['loss']
-        self.optimizer = settings['optimizer']
-        self.patience = settings['patience']
-        self.early_stop_monitor = settings['early_stop_monitor']
-        self.epochs = settings['epochs']
-        self.n_folds = settings['n_folds']
-        self.use_transfer = settings['use_transfer']
-        self.num_patient_test = settings['num_patient_test']
-        self.path_save_model = settings['path_save_model']
+    def __init__(self, sp, num_patient, n_ROI, task, dropoutRate, kernLength, F1, D, F2, dropoutType,
+                 kernLength_sep, loss, optimizer, patience, early_stop_monitor, epochs, n_folds):
+        self.sp = sp
+        self.num_patient = num_patient
+        self.n_ROI = n_ROI
+        self.task = task
+        self.dropoutRate = dropoutRate
+        self.kernLength = kernLength
+        self.F1 = F1
+        self.D = D
+        self.F2 = F2
+        self.dropoutType = dropoutType
+        self.kernLength_sep = kernLength_sep
+        self.loss = loss
+        self.optimizer = optimizer
+        self.patience = patience
+        self.early_stop_monitor = early_stop_monitor
+        self.epochs = epochs
+        self.n_folds = n_folds
+        self.use_transfer = False
+        self.num_patient_test=0
+        self.path_save_model=''
+
 
     def save_result(self):
 

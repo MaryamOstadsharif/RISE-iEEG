@@ -18,9 +18,9 @@ else:
     processed_data_path = ''
 
 settings = {
-    # 'Question_Answer' & 'Singing_Music' & 'Speech_Music'
+    # 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'move_rest'
     'task': 'Singing_Music',
-    'n_folds': 29,
+    'n_folds': 5,
     'hyper_param': {'F1': 5, 'dropoutRate': 0.542, 'kernLength': 60,
                     'kernLength_sep': 88, 'dropoutType': 'Dropout', 'D': 2},
     'epochs': 300,
@@ -28,35 +28,31 @@ settings = {
     'early_stop_monitor': 'val_loss',
     'optimizer': 'adam',
     'loss': 'categorical_crossentropy',
-    # number of patient for dataset: 'audio_visual':51, for dataset: 'music_reconstruction':29
-    'num_patient': 29,
+    # number of patient for dataset 'audio_visual':51,
+    # number of patient for dataset: 'music_reconstruction':29
+    # number of patient for dataset: 'move_rest':12
+    'num_patient': 20,
     'n_ROI': 20,
+    # type_balancing for 'move_rest': 'no_balancing'
+    # type_balancing for 'Singing_Music':over_sampling
     'type_balancing': 'over_sampling',
-    # number of patient for dataset: 'audio_visual':164, for dataset: 'music_reconstruction':250
-    'n_channels_all': 250
+    # number of channels for dataset: 'audio_visual':164,
+    # number of channels for dataset: 'music_reconstruction':250
+    # number of channels for dataset: 'music_reconstruction':126
+    'n_channels_all': 250,
+    # use transfer learning, must num_patient= number of all patients
+    'use_transfer': True,
+    'num_patient_test': 9,
+    'path_save_model': 'F:/maryam_sh/General model/General code/results/Singing_Music/over_sampling/2024-02-28-10-14-06/'
+                       'accuracy/checkpoint_gen__fold4.h5'
 }
 paths = Paths(settings)
 paths.create_path(path_processed_data=processed_data_path,
                   settings=settings)
 
-model=MultiPatient_model(sp=paths.path_results,
-                         n_folds=settings['n_folds'],
-                         num_patient=settings['num_patient'],
-                         n_ROI=settings['n_ROI'],
-                         epochs=settings['epochs'],
-                         patience=settings['patience'],
-                         F1=settings['hyper_param']['F1'],
-                         dropoutRate=settings['hyper_param']['dropoutRate'],
-                         kernLength=settings['hyper_param']['kernLength'],
-                         kernLength_sep=settings['hyper_param']['kernLength_sep'],
-                         dropoutType=settings['hyper_param']['dropoutType'],
-                         D=settings['hyper_param']['D'],
-                         F2=settings['hyper_param']['F1'] * settings['hyper_param']['D'],
-                         loss=settings['loss'],
-                         optimizer=settings['optimizer'],
-                         task=settings['task'],
-                         early_stop_monitor=settings['early_stop_monitor'])
+model = MultiPatient_model(settings=settings,
+                           paths=paths)
 
 model.load_split_data(lp=paths.path_processed_data,
-                       n_chans_all=settings['n_channels_all'],
-                       type_balancing=settings['type_balancing'])
+                      n_chans_all=settings['n_channels_all'],
+                      type_balancing=settings['type_balancing'])
