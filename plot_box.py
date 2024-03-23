@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # save path
-sp = "F:/maryam_sh/General model/plots/comparison_models_"
+sp = "F:/maryam_sh/General model/plots/new/comparison_models_"
 # 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'move_rest'
 task = 'Singing_Music'
 # number of folds for dataset: 'audio_visual' & 'under_sampling'=20 ,
@@ -49,12 +49,13 @@ for i, model_type in enumerate(models):
 # Customize the plot
 ax.set_xticks([i for i in range(len(models))])
 if task == 'Singing_Music' or task == 'move_rest':
-    ax.set_xticklabels(['GN_CNN', 'HTNet', 'EEGNet', 'RandomForest', 'MinimumDistance'], fontsize=14)
+    ax.set_xticklabels(['ECoGNet', 'HTNet', 'EEGNet', 'RandomForest', 'MinimumDistance'], fontsize=14)
 else:
     ax.set_xticklabels(['GN_CNN'])
-ax.set_ylabel('Test Fscore', fontsize=15)
-ax.set_title(('Multi patients models(' + task + '_' + balancing + ') in ' + str(num_fold) + ' folds'), fontsize=12)
+ax.set_ylabel('F-score', fontsize=15)
+# ax.set_title(('Multi patients models(' + task + '_' + balancing + ') in ' + str(num_fold) + ' folds'), fontsize=12)
 
 # Show the plot
 # plt.show()
 fig.savefig(sp + task + '_' + balancing+'_fscore')
+fig.savefig(sp + task + '_' + balancing+'_fscore.svg')

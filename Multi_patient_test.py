@@ -44,9 +44,8 @@ class MultiPatient_model:
         self.epochs = epochs
         self.n_folds = n_folds
         self.use_transfer = False
-        self.num_patient_test=0
-        self.path_save_model=''
-
+        self.num_patient_test = 0
+        self.path_save_model = ''
 
     def save_result(self):
 
@@ -78,7 +77,9 @@ class MultiPatient_model:
                         F1=self.F1, D=self.D, F2=self.F2,
                         dropoutType=self.dropoutType,
                         kernLength_sep=self.kernLength_sep,
-                        num_input=num_input)
+                        num_input=num_input,
+                        use_transfer=False,
+                        num_input_pretrained_model=0)
 
         model.compile(loss=self.loss, optimizer=self.optimizer, metrics=['accuracy'])
         checkpointer = ModelCheckpoint(filepath=chckpt_path, verbose=1, save_best_only=True)

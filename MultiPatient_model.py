@@ -65,8 +65,11 @@ class MultiPatient_model:
 
         if self.use_transfer:
             num_input = self.num_patient_test
+            pretrained_model = tf.keras.models.load_model(self.path_save_model)
+            num_input_pretrained_model=len(pretrained_model.input_shape)
         else:
             num_input = self.num_patient
+            num_input_pretrained_model=0
         # design GNCNN model
         model = ECoGNet(nb_classes=len(np.unique(np.argmax(y_train_all, axis=1))),
                         Chans=X_train_all[0].shape[-1],
@@ -76,7 +79,9 @@ class MultiPatient_model:
                         F1=self.F1, D=self.D, F2=self.F2,
                         dropoutType=self.dropoutType,
                         kernLength_sep=self.kernLength_sep,
-                        num_input=num_input)
+                        num_input=num_input,
+                        use_transfer=self.use_transfer,
+                        num_input_pretrained_model=num_input_pretrained_model)
 
         model.compile(loss=self.loss, optimizer=self.optimizer, metrics=['accuracy'])
         checkpointer = ModelCheckpoint(filepath=chckpt_path, verbose=1, save_best_only=True)
@@ -84,8 +89,7 @@ class MultiPatient_model:
         t_start = time.time()
 
         if self.use_transfer:
-            pretrained_model = tf.keras.models.load_model(self.path_save_model)
-            for i in range(1, 15):
+            for i in range(1, 16):
                 model.layers[-i].set_weights(pretrained_model.layers[-i].get_weights())
                 model.layers[-i].trainable = False
 

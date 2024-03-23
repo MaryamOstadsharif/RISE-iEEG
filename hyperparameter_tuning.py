@@ -62,7 +62,7 @@ settings = {
     # 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'move_rest'
     'task': 'Singing_Music',
     'n_folds': 2,
-    'hyper_param': {'F1': [2, 20], 'dropoutRate': [0.2, 0.8], 'kernLength': [10, 200],
+    'hyper_param': {'F1': [2, 20], 'dropoutRate': [0.4, 0.8], 'kernLength': [10, 200],
                     'kernLength_sep': [10, 200], 'dropoutType': ['Dropout', 'SpatialDropout2D'], 'D': 2},
     'epochs': 300,
     'patience': 20,
@@ -72,7 +72,7 @@ settings = {
     # number of patient for dataset 'audio_visual':51,
     # number of patient for dataset: 'music_reconstruction':29
     # number of patient for dataset: 'move_rest':12
-    'num_patient': 2,
+    'num_patient': 29,
     'n_ROI': [5, 100],
     # type_balancing for 'move_rest': 'no_balancing'
     'type_balancing': 'over_sampling',

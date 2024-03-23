@@ -19,13 +19,14 @@ def load_data(num_patient, lp, n_chans_all, task, use_transfer, num_patient_test
 
     if use_transfer == False:
         for patient in range(num_patient):
+            patient = patient
             print('patient_', str(patient))
             with open(lp + task+'/patient_'+str(patient+1) + '_reformat.pkl', 'rb') as f:
                 data_one_patient = pkl.load(f)
             n_ecog_chans = data_one_patient.shape[1]
 
             # Pad data in electrode dimension if necessary
-            if (num_patient > 1) and (n_chans_all > n_ecog_chans):
+            if (n_chans_all >= n_ecog_chans):
                 dat_sh = list(data_one_patient.shape)
                 dat_sh[1] = n_chans_all
                 # Create dataset padded with zeros if less than n_chans_all, or cut down to n_chans_all
@@ -99,7 +100,7 @@ def balance(x_train_all, y_train):
     x_all_resample = []
 
     for i in range(len(x_train_all)):
-        print("Balancing data fot data input_", str(i))
+        print("Balancing data for input_", str(i))
         x_resample = np.zeros((num_majority_class * 2, x_train_all[i].shape[1], x_train_all[i].shape[2]))
         for ch in range(x_train_all[i].shape[1]):
             x_resample[:, ch, :], y_train_res = oversample.fit_resample(x_train_all[i][:, ch, :], y_train)

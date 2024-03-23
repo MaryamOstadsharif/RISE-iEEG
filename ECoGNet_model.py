@@ -7,10 +7,11 @@ from keras.layers import SpatialDropout2D
 from keras.layers import Input, Flatten
 from keras.constraints import max_norm
 import tensorflow as tf
+import numpy as np
 
 
-def ECoGNet(nb_classes, Chans, Samples,dropoutRate, kernLength, F1, n_ROI,D, F2, dropoutType,kernLength_sep,num_input,
-          norm_rate=0.25):
+def ECoGNet(nb_classes, Chans, Samples, dropoutRate, kernLength, F1, n_ROI, D, F2, dropoutType, kernLength_sep,
+            num_input,use_transfer, num_input_pretrained_model, norm_rate=0.25):
     """
     Keras model for HTNet, which implements EEGNet with custom layers that implement
     the hilbert transform to compute spectral power/phase/frequency and project
@@ -51,6 +52,10 @@ def ECoGNet(nb_classes, Chans, Samples,dropoutRate, kernLength, F1, n_ROI,D, F2,
     block22 = tf.concat(block11, axis=1)
 
     ##################################################################
+    if use_transfer:
+        pad_width = ((0, 0), (0, num_input_pretrained_model-num_input), (0, 0),(0,0))
+        block22 = tf.pad(block22, pad_width, 'CONSTANT')
+
     block1 = Conv2D(F1, (1, kernLength), padding='same',
                     input_shape=(num_input, n_ROI, Samples),
                     use_bias=False,
