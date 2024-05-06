@@ -28,6 +28,7 @@ class MultiPatient_model:
         self.sp = paths.path_results
         self.num_patient = settings['num_patient']
         self.n_ROI = settings['n_ROI']
+        self.coef_reg = settings['coef_reg']
         self.task = settings['task']
         self.dropoutRate = settings['hyper_param']['dropoutRate']
         self.kernLength = settings['hyper_param']['kernLength']
@@ -45,19 +46,20 @@ class MultiPatient_model:
         self.use_transfer = settings['use_transfer']
         self.num_patient_test = settings['num_patient_test']
         self.path_save_model = settings['path_save_model']
+        self.st_num_patient = settings['st_num_patient']
 
     def save_result(self):
 
-        np.save(self.sp + 'acc_GNCNN' + '_' + str(self.n_folds) + '.npy', self.accs)
-        np.save(self.sp + 'precision_GNCNN' + '_' + str(self.n_folds) + '.npy', self.precision)
-        np.save(self.sp + 'recall_GNCNN' + '_' + str(self.n_folds) + '.npy', self.recall)
-        np.save(self.sp + 'fscore_GNCNN' + '_' + str(self.n_folds) + '.npy', self.fscore)
+        np.save(self.sp + 'acc_ECoGNet' + '_' + str(self.n_folds) + '.npy', self.accs)
+        np.save(self.sp + 'precision_ECoGNet' + '_' + str(self.n_folds) + '.npy', self.precision)
+        np.save(self.sp + 'recall_ECoGNet' + '_' + str(self.n_folds) + '.npy', self.recall)
+        np.save(self.sp + 'fscore_ECoGNet' + '_' + str(self.n_folds) + '.npy', self.fscore)
 
-        np.save(self.sp + 'acc_GNCNN_each_patient' + '_' + str(self.n_folds) + '.npy', self.acc_patient_folds)
-        np.save(self.sp + 'precision_GNCNN_each_patient' + '_' + str(self.n_folds) + '.npy',
+        np.save(self.sp + 'acc_ECoGNet_each_patient' + '_' + str(self.n_folds) + '.npy', self.acc_patient_folds)
+        np.save(self.sp + 'precision_ECoGNet_each_patient' + '_' + str(self.n_folds) + '.npy',
                 self.precision_patient_folds)
-        np.save(self.sp + 'recall_GNCNN_each_patient' + '_' + str(self.n_folds) + '.npy', self.recall_patient_folds)
-        np.save(self.sp + 'fscore_GNCNN_each_patient' + '_' + str(self.n_folds) + '.npy', self.fscore_patient_folds)
+        np.save(self.sp + 'recall_ECoGNet_each_patient' + '_' + str(self.n_folds) + '.npy', self.recall_patient_folds)
+        np.save(self.sp + 'fscore_ECoGNet_each_patient' + '_' + str(self.n_folds) + '.npy', self.fscore_patient_folds)
 
         np.save(self.sp + 'last_training_epoch' + '_' + str(self.n_folds) + '.npy', self.last_epochs)
 
@@ -66,13 +68,14 @@ class MultiPatient_model:
         if self.use_transfer:
             num_input = self.num_patient_test
             pretrained_model = tf.keras.models.load_model(self.path_save_model)
-            num_input_pretrained_model=len(pretrained_model.input_shape)
+            num_input_pretrained_model = len(pretrained_model.input_names)
         else:
             num_input = self.num_patient
-            num_input_pretrained_model=0
-        # design GNCNN model
+            num_input_pretrained_model = 0
+
+        # design the model
         model = ECoGNet(nb_classes=len(np.unique(np.argmax(y_train_all, axis=1))),
-                        Chans=X_train_all[0].shape[-1],
+                        Chans=[X_train_all[i].shape[-1] for i in range(len(X_train_all))],
                         Samples=X_train_all[0].shape[2],
                         dropoutRate=self.dropoutRate,
                         n_ROI=self.n_ROI, kernLength=self.kernLength,
@@ -81,7 +84,8 @@ class MultiPatient_model:
                         kernLength_sep=self.kernLength_sep,
                         num_input=num_input,
                         use_transfer=self.use_transfer,
-                        num_input_pretrained_model=num_input_pretrained_model)
+                        num_input_pretrained_model=num_input_pretrained_model,
+                        coef_reg=self.coef_reg)
 
         model.compile(loss=self.loss, optimizer=self.optimizer, metrics=['accuracy'])
         checkpointer = ModelCheckpoint(filepath=chckpt_path, verbose=1, save_best_only=True)
@@ -93,7 +97,7 @@ class MultiPatient_model:
                 model.layers[-i].set_weights(pretrained_model.layers[-i].get_weights())
                 model.layers[-i].trainable = False
 
-        # training GNCNN model
+        # training model
         model_history = model.fit(X_train_all, y_train_all, batch_size=16, epochs=self.epochs, verbose=2,
                                   validation_data=(X_val_all, y_val_all), callbacks=[checkpointer, early_stop])
         t_fit = time.time() - t_start
@@ -169,7 +173,9 @@ class MultiPatient_model:
                                            n_chans_all=n_chans_all,
                                            task=self.task,
                                            use_transfer=self.use_transfer,
-                                           num_patient_test=self.num_patient_test)
+                                           num_patient_test=self.num_patient_test,
+                                           st_num_patient=self.st_num_patient)
+
         if self.task != 'Singing_Music':
             labels = np.array(labels)
 

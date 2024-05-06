@@ -7,17 +7,13 @@ from keras.layers import SpatialDropout2D
 from keras.layers import Input, Flatten
 from keras.constraints import max_norm
 import tensorflow as tf
+from keras import regularizers
 import numpy as np
 
 
 def ECoGNet(nb_classes, Chans, Samples, dropoutRate, kernLength, F1, n_ROI, D, F2, dropoutType, kernLength_sep,
-            num_input,use_transfer, num_input_pretrained_model, norm_rate=0.25):
+            num_input, use_transfer, num_input_pretrained_model, coef_reg, norm_rate=0.25):
     """
-    Keras model for HTNet, which implements EEGNet with custom layers that implement
-    the hilbert transform to compute spectral power/phase/frequency and project
-    data into common brain regions to generalize across participants, even when
-    electrode placement varies widely.
-
     Inputs:
 
       nb_classes      : Number of classes to classify
@@ -45,15 +41,17 @@ def ECoGNet(nb_classes, Chans, Samples, dropoutRate, kernLength, F1, n_ROI, D, F
     input_all = []
     block11 = []
     for i in range(num_input):
-        input_all.append(Input(shape=(1, Samples, Chans)))
-        block11.append(tf.transpose(Dense(n_ROI, kernel_constraint=max_norm(norm_rate))(input_all[i]),
-                                    (0, 1, 3, 2)))
+        input_all.append(Input(shape=(1, Samples, Chans[i])))
+        block11.append(tf.transpose(Dense(units=n_ROI,
+                                          kernel_constraint=max_norm(norm_rate),
+                                          kernel_regularizer=regularizers.L2(coef_reg))(input_all[i]), (0, 1, 3, 2)))
 
-    block22 = tf.concat(block11, axis=1)
+    # block22 = tf.concat(block11, axis=1)
+    block22 = tf.reduce_sum(block11, axis=0)
 
     ##################################################################
     if use_transfer:
-        pad_width = ((0, 0), (0, num_input_pretrained_model-num_input), (0, 0),(0,0))
+        pad_width = ((0, 0), (0, num_input_pretrained_model - num_input), (0, 0), (0, 0))
         block22 = tf.pad(block22, pad_width, 'CONSTANT')
 
     block1 = Conv2D(F1, (1, kernLength), padding='same',

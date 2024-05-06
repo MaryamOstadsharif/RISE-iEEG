@@ -18,35 +18,36 @@ else:
     processed_data_path = ''
 
 settings = {
-    # 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'move_rest'
-    'task': 'Speech_Music',
-    'n_folds': 5,
+    # Task: 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'move_rest'
+    'task': 'Singing_Music',
+    # number of folds
+    'n_folds': 10,
+    # set hyperparameter
     'hyper_param': {'F1': 5, 'dropoutRate': 0.542, 'kernLength': 60,
                     'kernLength_sep': 88, 'dropoutType': 'Dropout', 'D': 2},
+    'n_ROI': 20,
+    'coef_reg': 0.05,
     'epochs': 300,
     'patience': 20,
     'early_stop_monitor': 'val_loss',
     'optimizer': 'adam',
     'loss': 'categorical_crossentropy',
-    # number of patient for dataset 'audio_visual':51,
-    # number of patient for dataset: 'music_reconstruction':29
-    # number of patient for dataset: 'move_rest':12
-    'num_patient': 51,
-    'n_ROI': 20,
-    # type_balancing for 'move_rest': 'no_balancing'
-    # type_balancing for 'Singing_Music':over_sampling
+    # index of first patient
+    'st_num_patient': 0,
+    # number of patient for dataset 'audio_visual':51, for dataset 'music_reconstruction':29, for dataset 'move_rest':12
+    'num_patient': 29,
+    # type_balancing for 'move_rest': 'no_balancing', 'Singing_Music':over_sampling
     'type_balancing': 'over_sampling',
-    # number of channels for dataset: 'audio_visual':164,
-    # number of channels for dataset: 'music_reconstruction':250
-    # number of channels for dataset: 'music_reconstruction':126
-    'n_channels_all': 164,
-    # use transfer learning, must num_patient= number of all patients
+    # Max number of channels for dataset 'audio_visual':164, for dataset 'music_reconstruction':250, dataset 'HTNet':128
+    'n_channels_all': 250,
+    # use transfer learning, for 'Unseen_patient': True, 'Same_patient': False
     'use_transfer': False,
-    'num_patient_test': 9,
+    # nuber of patients for test in 'Unseen_patient' scanario
+    'num_patient_test': 1,
+    # path of pretrained model
     'path_save_model': 'F:/maryam_sh/General model/General code/results/Singing_Music/over_sampling/2024-02-28-10-14-06/'
                        'accuracy/checkpoint_gen__fold4.h5'
 }
-
 
 paths = Paths(settings)
 paths.create_path(path_processed_data=processed_data_path,

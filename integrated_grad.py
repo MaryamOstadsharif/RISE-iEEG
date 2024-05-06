@@ -6,13 +6,13 @@ import numpy as np
 
 
 class IG:
-    def __init__(self, data, label, model, num_patient,patient):
+    def __init__(self, data, label, model, num_patient, patient):
         self.data = data
         self.model = model
         self.label = label
         self.baseline = tf.zeros(shape=data.shape, dtype=data.dtype)
-        self.num_patient=num_patient
-        self.patient=patient
+        self.num_patient = num_patient
+        self.patient = patient
 
     def compute_integrated_grad(self):
         attributions = self.integrated_gradients(m_steps=240, batch_size=1)
@@ -78,7 +78,7 @@ data_all_input, labels = load_data(num_patient, lp, n_chans_all=n_channels_all, 
 
 IG_all = []
 for patient in range(len(data_all_input)):
-    print('process in patient_',str(patient))
+    print('process in patient_', str(patient))
     IG_one = []
     for event in range(data_all_input[patient].shape[0]):
         print('  event_', str(event))
@@ -90,8 +90,9 @@ for patient in range(len(data_all_input)):
         model = tf.keras.models.load_model(path_model)
         label = int(labels[event])
 
-        integrate_grad = IG(data=tf.convert_to_tensor(data_event), label=label, model=model, num_patient=num_patient,patient=patient)
-        IG_one.append(integrate_grad.compute_integrated_grad()[0,0,:,:])
+        integrate_grad = IG(data=tf.convert_to_tensor(data_event), label=label, model=model, num_patient=num_patient,
+                            patient=patient)
+        IG_one.append(integrate_grad.compute_integrated_grad()[0, 0, :, :])
     IG_all.append(IG_one)
 
 np.save('F:/maryam_sh/integrated_grad/Ig_oversampling_29p.npy', IG_all)

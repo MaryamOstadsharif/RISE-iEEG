@@ -11,7 +11,7 @@ class Paths:
     def __init__(self, settings):
         self.settings = settings
         self.path_processed_data = ''
-        self.pro_mat_path=''
+        self.pro_mat_path = ''
         self.path_store_best_model = ''
         self.path_best_result = ''
         self.settings = settings
@@ -20,7 +20,7 @@ class Paths:
         self.path_store_model = ''
         self.path_save_data = ''
 
-    def create_path(self,path_processed_data, settings):
+    def create_path(self, path_processed_data, settings):
         """
         This function creates a path for saving the best models and results
         :param settings: settings of the project
@@ -31,8 +31,10 @@ class Paths:
             path_saved_models: the path for saving the trained models
         """
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        base_path = dir_path + '/results/' + settings['task'] + '/'+ settings['type_balancing'] + '/' + datetime.datetime.now().strftime(
-            '%Y-%m-%d-%H-%M-%S') + '/'
+        base_path = dir_path + '/results/' + settings['task'] + '/' + settings['type_balancing'] + '/' + \
+                    datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') + '/'
+        # base_path = dir_path + '/results/' + settings['task'] + '/' + settings['type_balancing'] + '/' + \
+        #             '/train_test_each_patient'+'/' +str(i) + '/'
 
         # Place where we save preprocessed data
         self.path_processed_data = path_processed_data
@@ -46,7 +48,6 @@ class Paths:
         self.path_store_model = base_path + 'hyper_param_set/saved_models/'
         Path(self.path_store_model).mkdir(parents=True, exist_ok=True)
         self.save_settings()
-
 
     def save_settings(self):
         """ working directory """
