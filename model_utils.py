@@ -11,25 +11,50 @@ os.environ["OMP_NUM_THREADS"] = "1"
 set_log_level(verbose='ERROR')
 
 
-def load_data(num_patient, lp, n_chans_all, task, use_transfer, num_patient_test, st_num_patient):
+def load_data(num_patient, lp, n_chans_all, task, use_transfer, num_patient_test):
     data_all_input = []
 
-    with open(lp + task + '/labels.pkl', 'rb') as f:
+    with open(lp +task+ '/labels.pkl', 'rb') as f:
         label = pkl.load(f)
 
     if use_transfer == False:
-        for patient in range(st_num_patient, st_num_patient + num_patient):
+        for patient in range(num_patient):
+            patient = patient
             print('patient_', str(patient))
-            with open(lp + task + '/patient_' + str(patient + 1) + '_reformat.pkl', 'rb') as f:
+            with open(lp + task+'/patient_'+str(patient+1) + '_reformat.pkl', 'rb') as f:
                 data_one_patient = pkl.load(f)
-            data_all_input.append(data_one_patient)
+            n_ecog_chans = data_one_patient.shape[1]
+
+            # Pad data in electrode dimension if necessary
+            if (n_chans_all >= n_ecog_chans):
+                dat_sh = list(data_one_patient.shape)
+                dat_sh[1] = n_chans_all
+                # Create dataset padded with zeros if less than n_chans_all, or cut down to n_chans_all
+                X_pad = np.zeros(dat_sh)
+                X_pad[:, :n_ecog_chans, ...] = data_one_patient
+                dat = X_pad.copy()
+
+            data_all_input.append(dat)
 
     if use_transfer:
-        for patient in range(num_patient, num_patient_test + num_patient):
+        for patient in range(num_patient,num_patient_test+num_patient):
             print('patient_', str(patient))
             with open(lp + task + '/patient_' + str(patient + 1) + '_reformat.pkl', 'rb') as f:
                 data_one_patient = pkl.load(f)
-            data_all_input.append(data_one_patient)
+            n_ecog_chans = data_one_patient.shape[1]
+
+            # Pad data in electrode dimension if necessary
+            if (num_patient > 1) and (n_chans_all > n_ecog_chans):
+                dat_sh = list(data_one_patient.shape)
+                dat_sh[1] = n_chans_all
+                # Create dataset padded with zeros if less than n_chans_all, or cut down to n_chans_all
+                X_pad = np.zeros(dat_sh)
+                X_pad[:, :n_ecog_chans, ...] = data_one_patient
+                dat = X_pad.copy()
+
+            data_all_input.append(dat)
+
+
     print('Data loaded!')
 
     return data_all_input, label
