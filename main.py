@@ -29,7 +29,7 @@ settings = {
     'coef_reg': 0.05,
     'epochs': 300,
     'patience': 20,
-    'early_stop_monitor': 'val_loss',
+    'early_stop_monitor': 'val_accuracy',
     'optimizer': 'adam',
     'loss': 'categorical_crossentropy',
     # index of first patient

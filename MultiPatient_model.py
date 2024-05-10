@@ -88,8 +88,8 @@ class MultiPatient_model:
                         coef_reg=self.coef_reg)
 
         model.compile(loss=self.loss, optimizer=self.optimizer, metrics=['accuracy'])
-        checkpointer = ModelCheckpoint(filepath=chckpt_path, verbose=1, save_best_only=True)
-        early_stop = EarlyStopping(monitor=self.early_stop_monitor, mode='min', patience=self.patience, verbose=0)
+        checkpointer = ModelCheckpoint(filepath=chckpt_path, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
+        early_stop = EarlyStopping(monitor=self.early_stop_monitor, mode='max', patience=self.patience, verbose=0)
         t_start = time.time()
 
         if self.use_transfer:

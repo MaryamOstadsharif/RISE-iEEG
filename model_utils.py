@@ -61,6 +61,7 @@ def load_data(num_patient, lp, n_chans_all, task, use_transfer, num_patient_test
 
 
 def select_random_event(num_minority, num_majority, task):
+    random.seed(random_seed)
     if task == 'Question_Answer':
         inds_ran = random.sample(range(num_minority, num_majority + num_minority), num_minority)
         inds_ran.extend(range(0, num_minority))
@@ -71,6 +72,7 @@ def select_random_event(num_minority, num_majority, task):
 
 
 def folds_choose(n_folds, labels, num_events, num_minority, num_majority, type, task, random_seed):
+    np.random.seed(random_seed)
     inds_all_train, inds_all_val, inds_all_test = [], [], []
     stratified_splitter = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=random_seed)
     if type != 'under_sampling':
