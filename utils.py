@@ -42,6 +42,7 @@ class Paths:
         self.path_save_data = dir_path + '/data/'
         Path(self.path_save_data).mkdir(parents=True, exist_ok=True)
         # Place where we save figures
+        # self.path_results = base_path + 'accuracy/'+str(i)+'/'
         self.path_results = base_path + 'accuracy/'
         Path(self.path_results).mkdir(parents=True, exist_ok=True)
         # Place where we save model hyper parameters

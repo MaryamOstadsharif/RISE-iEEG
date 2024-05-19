@@ -5,10 +5,6 @@ import tensorflow as tf
 tf.compat.v1.disable_eager_execution()
 # tf.config.run_functions_eagerly(False)
 from tensorflow.keras import utils as np_utils
-
-rand_seed = 1337
-# tf.random.set_seed(rand_seed)
-
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from sklearn.metrics import precision_recall_fscore_support
 from collections import Counter
@@ -16,7 +12,6 @@ import numpy as np
 from tqdm import tqdm
 from ECoGNet_model import *
 from model_utils import *
-import matplotlib.pyplot as plt
 
 os.environ["OMP_NUM_THREADS"] = "1"
 if os.environ.get("CUDA_VISIBLE_DEVICES") is None:
@@ -29,86 +24,81 @@ warnings.simplefilter(action='ignore', category=RuntimeWarning)
 
 
 class MultiPatient_model:
-    def __init__(self, settings, paths):
-        self.path = paths
-        self.settings = settings
+    def __init__(self, sp, num_patient, n_ROI, task, dropoutRate, kernLength, F1, D, F2, dropoutType,
+                 kernLength_sep, loss, optimizer, patience, early_stop_monitor, epochs, n_folds):
+        self.sp = sp
+        self.num_patient = num_patient
+        self.n_ROI = n_ROI
+        self.task = task
+        self.dropoutRate = dropoutRate
+        self.kernLength = kernLength
+        self.F1 = F1
+        self.D = D
+        self.F2 = F2
+        self.dropoutType = dropoutType
+        self.kernLength_sep = kernLength_sep
+        self.loss = loss
+        self.optimizer = optimizer
+        self.patience = patience
+        self.early_stop_monitor = early_stop_monitor
+        self.epochs = epochs
+        self.n_folds = n_folds
+        self.use_transfer = False
+        self.num_patient_test = 0
+        self.path_save_model = ''
 
     def save_result(self):
 
-        np.save(self.path.path_results + 'acc_ECoGNet' + '_' + str(self.settings['n_folds']) + '.npy', self.accs)
-        np.save(self.path.path_results + 'precision_ECoGNet' + '_' + str(self.settings['n_folds']) + '.npy', self.precision)
-        np.save(self.path.path_results + 'recall_ECoGNet' + '_' + str(self.settings['n_folds']) + '.npy', self.recall)
-        np.save(self.path.path_results + 'fscore_ECoGNet' + '_' + str(self.settings['n_folds']) + '.npy', self.fscore)
+        np.save(self.sp + 'acc_GNCNN' + '_' + str(self.n_folds) + '.npy', self.accs)
+        np.save(self.sp + 'precision_GNCNN' + '_' + str(self.n_folds) + '.npy', self.precision)
+        np.save(self.sp + 'recall_GNCNN' + '_' + str(self.n_folds) + '.npy', self.recall)
+        np.save(self.sp + 'fscore_GNCNN' + '_' + str(self.n_folds) + '.npy', self.fscore)
 
-        np.save(self.path.path_results + 'acc_ECoGNet_each_patient' + '_' + str(self.settings['n_folds']) + '.npy', self.acc_patient_folds)
-        np.save(self.path.path_results + 'precision_ECoGNet_each_patient' + '_' + str(self.settings['n_folds']) + '.npy',
+        np.save(self.sp + 'acc_GNCNN_each_patient' + '_' + str(self.n_folds) + '.npy', self.acc_patient_folds)
+        np.save(self.sp + 'precision_GNCNN_each_patient' + '_' + str(self.n_folds) + '.npy',
                 self.precision_patient_folds)
-        np.save(self.path.path_results + 'recall_ECoGNet_each_patient' + '_' + str(self.settings['n_folds']) + '.npy', self.recall_patient_folds)
-        np.save(self.path.path_results + 'fscore_ECoGNet_each_patient' + '_' + str(self.settings['n_folds']) + '.npy', self.fscore_patient_folds)
+        np.save(self.sp + 'recall_GNCNN_each_patient' + '_' + str(self.n_folds) + '.npy', self.recall_patient_folds)
+        np.save(self.sp + 'fscore_GNCNN_each_patient' + '_' + str(self.n_folds) + '.npy', self.fscore_patient_folds)
 
-        np.save(self.path.path_results + 'last_training_epoch' + '_' + str(self.settings['n_folds']) + '.npy', self.last_epochs)
+        np.save(self.sp + 'last_training_epoch' + '_' + str(self.n_folds) + '.npy', self.last_epochs)
 
     def train_evaluate_model(self, X_train_all, y_train_all, X_val_all, y_val_all, X_test_all, y_test_all, chckpt_path):
 
-        if self.settings['use_transfer']:
-            num_input = self.settings['num_patient_test']
-            pretrained_model = tf.keras.models.load_model(self.settings['path_save_model'])
-            num_input_pretrained_model = len(pretrained_model.input_names)
+        if self.use_transfer:
+            num_input = self.num_patient_test
         else:
-            num_input = self.settings['num_patient']
-            num_input_pretrained_model = 0
-
-        # design the model
+            num_input = self.num_patient
+        # design GNCNN model
         model = ECoGNet(nb_classes=len(np.unique(np.argmax(y_train_all, axis=1))),
-                        Chans=[X_train_all[i].shape[-1] for i in range(len(X_train_all))],
+                        Chans=X_train_all[0].shape[-1],
                         Samples=X_train_all[0].shape[2],
-                        dropoutRate=self.settings['hyper_param']['dropoutRate'],
-                        n_ROI=self.settings['n_ROI'], kernLength=self.settings['hyper_param']['kernLength'],
-                        F1=self.settings['hyper_param']['F1'], D=self.settings['hyper_param']['D'],
-                        F2= self.settings['hyper_param']['F1'] * self.settings['hyper_param']['D'],
-                        dropoutType=self.settings['hyper_param']['dropoutType'],
-                        kernLength_sep=self.settings['hyper_param']['kernLength_sep'],
+                        dropoutRate=self.dropoutRate,
+                        n_ROI=self.n_ROI, kernLength=self.kernLength,
+                        F1=self.F1, D=self.D, F2=self.F2,
+                        dropoutType=self.dropoutType,
+                        kernLength_sep=self.kernLength_sep,
                         num_input=num_input,
-                        use_transfer=self.settings['use_transfer'],
-                        num_input_pretrained_model=num_input_pretrained_model,
-                        coef_reg=self.settings['coef_reg'])
+                        use_transfer=False,
+                        num_input_pretrained_model=0)
 
-        model.compile(loss=self.settings['loss'], optimizer=self.settings['optimizer'], metrics=['accuracy'])
-        checkpointer = ModelCheckpoint(filepath=chckpt_path, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
-        early_stop = EarlyStopping(monitor=self.settings['early_stop_monitor'], mode='max', patience=self.settings['patience'], verbose=0)
+        model.compile(loss=self.loss, optimizer=self.optimizer, metrics=['accuracy'])
+        checkpointer = ModelCheckpoint(filepath=chckpt_path, verbose=1, save_best_only=True)
+        early_stop = EarlyStopping(monitor=self.early_stop_monitor, mode='min', patience=self.patience, verbose=0)
         t_start = time.time()
 
-        if self.settings['use_transfer']:
-            for i in range(1, 16):
+        if self.use_transfer:
+            pretrained_model = tf.keras.models.load_model(self.path_save_model)
+            for i in range(1, 15):
                 model.layers[-i].set_weights(pretrained_model.layers[-i].get_weights())
                 model.layers[-i].trainable = False
 
-        # training model
-        model_history = model.fit(X_train_all, y_train_all, batch_size=16, epochs=self.settings['epochs'], verbose=2,
+        # training GNCNN model
+        model_history = model.fit(X_train_all, y_train_all, batch_size=16, epochs=self.epochs, verbose=2,
                                   validation_data=(X_val_all, y_val_all), callbacks=[checkpointer, early_stop])
-
-        # plt.figure(dpi=300)
-        # plt.plot(model_history.history['loss'], color='blue', label='Train_loss', linewidth=5)
-        # plt.plot(model_history.history['val_loss'], color='deeppink', label='Validation_loss', linewidth=5)
-        # plt.title('model loss')
-        # plt.ylabel('loss')
-        # plt.xlabel('epoch')
-        # plt.legend()
-        # plt.savefig('')
-        #
-        # plt.figure(dpi=300)
-        # plt.plot(model_history.history['accuracy'], color='blue', label='Train_loss', linewidth=5)
-        # plt.plot(model_history.history['val_accuracy'], color='deeppink', label='Validation_loss', linewidth=5)
-        # plt.title('model accuracy')
-        # plt.ylabel('accuracy')
-        # plt.xlabel('epoch')
-        # plt.legend()
-
-
         t_fit = time.time() - t_start
         last_epoch = len(model_history.history['loss'])
-        if last_epoch < self.settings['epochs']:
-            last_epoch -= self.settings['patience']
+        if last_epoch < self.epochs:
+            last_epoch -= self.patience
         print("Last epoch was: ", last_epoch)
 
         # evaluate the best model
@@ -167,51 +157,41 @@ class MultiPatient_model:
                                                 zero_division=0)[2])
 
         tf.keras.backend.clear_session()
-        print(f"\n fscore:{fscore_lst[2]}")
-        print(f"\n acc:{accs_lst[2]}")
         return accs_lst, pre_lst, recall_lst, fscore_lst, np.array(
             [last_epoch, t_fit]), acc_patient, pre_patient, recall_patient, fscore_patinet
 
-    def load_split_data(self):
+    def load_split_data(self, lp, n_chans_all, type_balancing, rand_seed=1337):
         np.random.seed(rand_seed)
 
-        data_all_input, labels = load_data(self.settings['num_patient'],
-                                           self.path.path_processed_data,
-                                           n_chans_all=self.settings['n_channels_all'],
-                                           task=self.settings['task'],
-                                           use_transfer=self.settings['use_transfer'],
-                                           num_patient_test=self.settings['num_patient_test'],
-                                           st_num_patient=self.settings['st_num_patient'],
-                                           del_patient=self.settings['del_patient'],
-                                           one_patient_out=self.settings['one_patient_out'])
-
-        if self.settings['one_patient_out']:
-            self.settings['num_patient']-=1
-
-        if self.settings['task'] != 'Singing_Music':
+        data_all_input, labels = load_data(self.num_patient,
+                                           lp,
+                                           n_chans_all=n_chans_all,
+                                           task=self.task,
+                                           use_transfer=self.use_transfer,
+                                           num_patient_test=self.num_patient_test)
+        if self.task != 'Singing_Music':
             labels = np.array(labels)
 
-        inds_all_train, inds_all_val, inds_all_test = folds_choose(self.settings['n_folds'],
+        inds_all_train, inds_all_val, inds_all_test = folds_choose(self.n_folds,
                                                                    labels,
                                                                    data_all_input[0].shape[0],
                                                                    Counter(labels).most_common()[1][1],
                                                                    Counter(labels).most_common()[0][1],
-                                                                   self.settings['type_balancing'],
-                                                                   self.settings['task'],
-                                                                   rand_seed,
-                                                                   self.settings['one_patient_out'])
+                                                                   type_balancing,
+                                                                   self.task,
+                                                                   rand_seed)
 
-        self.accs = np.zeros([self.settings['n_folds'], 3])
-        self.precision = np.zeros([self.settings['n_folds'], 3])
-        self.recall = np.zeros([self.settings['n_folds'], 3])
-        self.fscore = np.zeros([self.settings['n_folds'], 3])
-        self.last_epochs = np.zeros([self.settings['n_folds'], 2])
+        self.accs = np.zeros([self.n_folds, 3])
+        self.precision = np.zeros([self.n_folds, 3])
+        self.recall = np.zeros([self.n_folds, 3])
+        self.fscore = np.zeros([self.n_folds, 3])
+        self.last_epochs = np.zeros([self.n_folds, 2])
 
         self.acc_patient_folds = []
         self.precision_patient_folds = []
         self.recall_patient_folds = []
         self.fscore_patient_folds = []
-        for fold in tqdm(range(self.settings['n_folds'])):
+        for fold in tqdm(range(self.n_folds)):
             print('procsess in fold_', str(fold))
             inds_test = inds_all_test[fold]
             inds_val = inds_all_val[fold]
@@ -224,7 +204,7 @@ class MultiPatient_model:
             X_val_all = ([data_all_input[i][inds_val] for i in range(len(data_all_input))])
             y_val = labels[inds_val]
 
-            if self.settings['type_balancing'] == 'over_sampling':
+            if type_balancing == 'over_sampling':
                 X_train_all, y_train = balance(X_train_all, y_train)
 
             y_train_all = y_train.tolist() * len(data_all_input)
@@ -243,7 +223,7 @@ class MultiPatient_model:
             y_test_all = np_utils.to_categorical(y_test_all)
             X_test_all = [np.expand_dims(X_test_all[i], 1) for i in range(len(X_test_all))]
 
-            chckpt_path = self.path.path_results + 'checkpoint_gen_' + '_fold' + str(fold) + '.h5'
+            chckpt_path = self.sp + 'checkpoint_gen_' + '_fold' + str(fold) + '.h5'
 
             accs_lst, pre_lst, recall_lst, fscore_lst, last_epoch_tmp, acc_patient, pre_patient, \
             recall_patient, fscore_patine = self.train_evaluate_model(X_train_all=X_train_all,

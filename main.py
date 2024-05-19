@@ -19,14 +19,14 @@ else:
 
 settings = {
     # Task: 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'move_rest'
-    'task': 'Singing_Music',
+    'task': 'move_rest',
     # number of folds
     'n_folds': 10,
     # set hyperparameter
     'hyper_param': {'F1': 5, 'dropoutRate': 0.542, 'kernLength': 60,
                     'kernLength_sep': 88, 'dropoutType': 'Dropout', 'D': 2},
     'n_ROI': 20,
-    'coef_reg': 0.05,
+    'coef_reg': 0.01,
     'epochs': 300,
     'patience': 20,
     'early_stop_monitor': 'val_accuracy',
@@ -35,18 +35,20 @@ settings = {
     # index of first patient
     'st_num_patient': 0,
     # number of patient for dataset 'audio_visual':51, for dataset 'music_reconstruction':29, for dataset 'move_rest':12
-    'num_patient': 29,
+    'num_patient': 12,
+    'one_patient_out': False,
+    'del_patient': 0,
     # type_balancing for 'move_rest': 'no_balancing', 'Singing_Music':over_sampling
-    'type_balancing': 'over_sampling',
+    'type_balancing': 'no_balancing',
     # Max number of channels for dataset 'audio_visual':164, for dataset 'music_reconstruction':250, dataset 'HTNet':128
-    'n_channels_all': 250,
+    'n_channels_all': 128,
     # use transfer learning, for 'Unseen_patient': True, 'Same_patient': False
     'use_transfer': False,
     # nuber of patients for test in 'Unseen_patient' scanario
     'num_patient_test': 1,
     # path of pretrained model
-    'path_save_model': 'F:/maryam_sh/General model/General code/results/Singing_Music/over_sampling/2024-02-28-10-14-06/'
-                       'accuracy/checkpoint_gen__fold4.h5'
+    'path_save_model': 'F:/maryam_sh/General model/General code/results/Singing_Music/over_sampling/one_patient_out/'
+                       + str(0) + '/checkpoint_gen__fold0.h5'
 }
 
 paths = Paths(settings)
@@ -55,6 +57,4 @@ paths.create_path(path_processed_data=processed_data_path,
 
 model = MultiPatient_model(settings=settings,
                            paths=paths)
-model.load_split_data(lp=paths.path_processed_data,
-                      n_chans_all=settings['n_channels_all'],
-                      type_balancing=settings['type_balancing'])
+model.load_split_data()

@@ -35,21 +35,24 @@ def plot_hist(type, event_id_f, num_best_elec):
         count_label.extend(np.array(Counter(label_elec_best[patient, :]).most_common())[0:num_best_elec, 0].tolist())
 
     print(Counter(count_label))
-    plt.figure(dpi=300)
-    color_list = ['yellow', 'cyan', 'deeppink', 'lime', 'steelblue', 'purple', 'pink', 'darkgray', 'orangered',
-                  'forestgreen', 'navy', 'forestgreen']
+    fig, ax = plt.subplots(dpi=300)
+    color_list = ['yellow', 'cyan', 'deeppink', 'lime', 'steelblue', 'purple', 'violet', 'darkgray', 'orangered',
+                  'forestgreen', 'navy', 'forestgreen', 'blue', 'violet', 'red', 'brown', 'green', 'gray', 'darkblue']
 
-    for i in range(9):
+    for i in range(10):
         plt.bar(i, Counter(count_label).most_common()[i][1], color=color_list[i], ecolor='blue', capsize=3,
                 label=Counter(count_label).most_common()[i][0])
 
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
     plt.legend()
     plt.xticks([])
     plt.ylim(0, Counter(count_label).most_common()[0][1] + 2)
     plt.ylabel('#Patients')
-    plt.xlabel('Significant electrodes')
+    plt.xlabel('Valuable lobes')
     # plt.title(f'Histogram significant electrodes across 29 patients ({type} model) for {len(ig[0]) - event_id_f} events', fontsize=9)
     plt.savefig(f'F:/maryam_sh/integrated_grad/hist_{type}_29p')
+    plt.savefig(f'F:/maryam_sh/integrated_grad/hist_{type}_29p.svg')
     print('end')
 
 
@@ -167,6 +170,7 @@ def plot_best_elec_v1():
     np.save('F:/maryam_sh/integrated_grad/coor_best_elec_left.npy', coor_best_elec_left)
 
 
+
 def plot_best_elec_v2():
     event_id_f = 0
     num_best_elec = 1
@@ -181,7 +185,7 @@ def plot_best_elec_v2():
     coor_best_elec_left = np.zeros((18, 3))
     m = 0
     n = 0
-    best = []
+    best=[]
     for patient in range(len(ig)):
         for event in range(event_id_f, len(ig[0])):
             data_norm = preprocessing.normalize(ig[patient][event])
@@ -195,7 +199,7 @@ def plot_best_elec_v2():
             a = []
             for i in range(len(np.where(np.array(ch[patient]) == best_elec)[0])):
                 a.append(node_coords[patient][np.where(np.array(ch[patient]) == best_elec)[0][i], :])
-            np.save(f'F:/maryam_sh/integrated_grad/{patient}.npy', a)
+            np.save(f'F:/maryam_sh/integrated_grad/{patient}.npy',a)
             coor_best_elec_right[m, :] = node_coords[patient][pos_best_elec, :]
             m = m + 1
         else:
@@ -207,10 +211,8 @@ def plot_best_elec_v2():
             n = n + 1
 
     np.save('F:/maryam_sh/integrated_grad/best.npy', best)
-
-
 # plot_heatmap_matrix(patient_id=2, event=5)
-plot_hist(type='oversampling', event_id_f=0, num_best_elec=4)
+plot_hist(type='oversampling', event_id_f=0, num_best_elec=3)
 # plot_heat_map(patient=13, number_trial=[0, 73, 89], T=40, type='oversampling')
 # plot_best_elec_v2()
 # plot_hist_seperate(type='oversampling', num_best_elec=1)
