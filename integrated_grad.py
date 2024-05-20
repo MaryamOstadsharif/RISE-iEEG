@@ -1,18 +1,16 @@
 import tensorflow as tf
-import matplotlib.pyplot as plt
-from GNCNN_model import *
 from model_utils import load_data
 import numpy as np
 
 
 class IG:
-    def __init__(self, data, label, model, num_patient,patient):
+    def __init__(self, data, label, model, num_patient, patient):
         self.data = data
         self.model = model
         self.label = label
         self.baseline = tf.zeros(shape=data.shape, dtype=data.dtype)
-        self.num_patient=num_patient
-        self.patient=patient
+        self.num_patient = num_patient
+        self.patient = patient
 
     def compute_integrated_grad(self):
         attributions = self.integrated_gradients(m_steps=240, batch_size=1)
@@ -67,18 +65,28 @@ path_model = 'F:/maryam_sh/General model/General code/results/Singing_Music/over
              'accuracy/checkpoint_gen__fold18.h5'
 save_path = 'F:/maryam_sh/integrated_grad/'
 lp = 'F:/maryam_sh/new_dataset/dataset/'
-# number of patient for dataset: 'audio_visual':164, for dataset: 'music_reconstruction':250
-n_channels_all = 250
-# 'Question_Answer' & 'Singing_Music' & 'Speech_Music'
-task = 'Singing_Music'
-# number of patient for dataset: 'audio_visual':51, for dataset: 'music_reconstruction':29
-num_patient = 29
 
-data_all_input, labels = load_data(num_patient, lp, n_chans_all=n_channels_all, task=task)
+settings = {
+    # Task: 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'move_rest'
+    'task': 'Singing_Music',
+    # Index of the first patient
+    'st_num_patient': 0,
+    # number of patient for dataset 'audio_visual':51, for dataset 'music_reconstruction':29, for dataset 'move_rest':12
+    # Number of patients (Audio Visual: 51, Music Reconstruction: 29, Upper-Limb Movement: 12)
+    'num_patient': 29,
+    # Whether to use one patient out cross-validation
+    'one_patient_out': False,
+    # # Max number of channels ('Audio Visual':164, 'Music Reconstruction':250, 'Upper-Limb Movement':128)
+    'n_channels_all': 250,
+    # Whether to use 'Unseen_patient' scenario
+    'Unseen_patient': False,
+}
+
+data_all_input, labels = load_data(path=lp, settings=settings)
 
 IG_all = []
 for patient in range(len(data_all_input)):
-    print('process in patient_',str(patient))
+    print('process in patient_', str(patient))
     IG_one = []
     for event in range(data_all_input[patient].shape[0]):
         print('  event_', str(event))
@@ -90,8 +98,12 @@ for patient in range(len(data_all_input)):
         model = tf.keras.models.load_model(path_model)
         label = int(labels[event])
 
-        integrate_grad = IG(data=tf.convert_to_tensor(data_event), label=label, model=model, num_patient=num_patient,patient=patient)
-        IG_one.append(integrate_grad.compute_integrated_grad()[0,0,:,:])
+        integrate_grad = IG(data=tf.convert_to_tensor(data_event),
+                            label=label,
+                            model=model,
+                            num_patient=settings['num_patient'],
+                            patient=patient)
+        IG_one.append(integrate_grad.compute_integrated_grad()[0, 0, :, :])
     IG_all.append(IG_one)
 
 np.save('F:/maryam_sh/integrated_grad/Ig_oversampling_29p.npy', IG_all)
