@@ -13,18 +13,35 @@ def plot_elec_point(patient):
     plot.save_as_html(f'plot_elec_point_patient{patient}.html')
 
 
-def plot_heatmap_per_patient(patient_id, event):
+def plot_heatmap_per_patient(patient_id, trial_id):
     with open('F:/maryam_sh/load_data/new_dataset/channel_name_list.pkl', 'rb') as f:
         ch = pkl.load(f)
-    ig = np.load(f'F:/maryam_sh/integrated_grad/Ig_{type}_29p.npy')
-    data_norm = preprocessing.normalize(ig[patient_id][event])
-    plt.figure(dpi=300)
-    plt.imshow(data_norm[:, :len(ch[patient_id])], cmap='viridis')
-    plt.colorbar()
-    plt.title(f'Integrated Gradient patient_{patient_id}/ event_{event}')
-    plt.savefig(f'F:/maryam_sh/integrated_grad/heatmap_per_patient_{patient_id}.png')
-    plt.savefig(f'F:/maryam_sh/integrated_grad/heatmap_per_patient_{patient_id}.svg')
 
+    ig = np.load('F:/maryam_sh/integrated_grad/Ig_oversampling_29p.npy')
+
+    fig, ax = plt.subplots(1, 2, dpi=300)
+    Event_list = ['Music', 'Singing']
+
+    for i in range(2):
+        data_norm = preprocessing.normalize(np.abs(np.mean(ig[patient_id][trial_id[i]:trial_id[i + 1], :, :], axis=0)))
+
+        im = ax[i].imshow(data_norm[::-1, :len(ch[patient_id])], cmap='viridis', vmin=0, vmax=1, aspect='auto')
+        ax[i].set_title(f'{Event_list[i]} event')
+        divider = make_axes_locatable(ax[i])
+        cax_cb = divider.append_axes("right", size="7%", pad=0.1)
+        cbar = fig.colorbar(im, cax=cax_cb)
+        cbar.ax.tick_params(labelsize=8)
+        ax[i].set_yticks(np.arange(0, 225, 25))
+        ax[i].set_xticks(np.arange(0, len(ch[patient_id])+8, 8))
+        ax[i].set_yticklabels(np.arange(200, -25, -25), fontsize=8)
+        ax[i].set_xticklabels(np.arange(0, len(ch[patient_id]) + 8, 8), fontsize=8)
+        ax[i].set_ylabel('Time')
+        ax[i].set_xlabel('Channel')
+
+    # ch[patient_id][np.argmax(np.sum(data_norm, axis=0))
+    plt.tight_layout()
+    fig.savefig(f'F:/maryam_sh/integrated_grad/ht_{patient_id}.png')
+    fig.savefig(f'F:/maryam_sh/integrated_grad/ht_{patient_id}.svg')
 
 def plot_histogram(event_id_f, num_best_elec):
     with open('F:/maryam_sh/load_data/new_dataset/channel_name_list.pkl', 'rb') as f:
@@ -207,9 +224,9 @@ def plot_heatmap_best_lobe():
     plt.savefig("plot_heatmap_best_lobe.svg")
 
 # plot_elec_point(patient=0)
-# plot_heatmap_per_patient(patient_id=2, event=5)
+# plot_heatmap_per_patient(patient_id=0, trial_id=[0, 73, 89])
 # plot_histogram(event_id_f=0, num_best_elec=3)
-# plot_markers_heatmap(patient=13, number_trial=[0, 73, 89], T=40)
+# plot_markers_heatmap(patient=13, trial_id=[0, 73, 89], T=40)
 # plot_hist_seperate(num_best_elec=1)
 # find_best_lobe()
 # plot_heatmap_best_lobe()
