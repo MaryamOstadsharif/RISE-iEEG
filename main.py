@@ -59,7 +59,8 @@ settings = {
     # # Max number of channels ('Audio Visual':164, 'Music Reconstruction':250, 'Upper-Limb Movement':128)
     'n_channels_all': 128,
     # Whether to use 'Unseen_patient' scenario
-    'Unseen_patient': False
+    'Unseen_patient': False,
+    'use_transfer': False
 }
 
 # Initialize paths

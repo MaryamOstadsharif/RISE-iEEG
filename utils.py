@@ -30,7 +30,7 @@ class Paths:
         self.path_processed_data = path_processed_data
 
     def creat_result_path(self, patient):
-        if self.settings['one_patient_out']:
+        if self.settings['one_patient_out'] or self.settings['use_transfer']:
             # Place where we save figures
             self.path_results = self.base_path + str(patient) + '/accuracy/'
             Path(self.path_results).mkdir(parents=True, exist_ok=True)
