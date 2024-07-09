@@ -43,11 +43,23 @@ def plot_heatmap_per_patient(patient_id, trial_id):
     fig.savefig(f'F:/maryam_sh/integrated_grad/ht_{patient_id}.png')
     fig.savefig(f'F:/maryam_sh/integrated_grad/ht_{patient_id}.svg')
 
-def plot_histogram(event_id_f, num_best_elec):
+def plot_histogram(event_id_f, num_best_elec, del_lobe):
     with open('F:/maryam_sh/load_data/new_dataset/channel_name_list.pkl', 'rb') as f:
         ch = pkl.load(f)
 
-    ig = np.load(f'F:/maryam_sh/integrated_grad/Ig_oversampling_29p.npy')
+    if del_lobe:
+        for patient in range(29):
+            del_ind = []
+            for pos, channel in enumerate(ch[patient]):
+                if channel[7:] == 'superiortemporal':
+                    del_ind.append(pos)
+            ch[patient] = np.delete(ch[patient], del_ind)
+
+    if del_lobe:
+        with open('F:/maryam_sh/integrated_grad/Ig_oversampling_del_temporal.pkl', 'rb') as f:
+            ig = pkl.load(f)
+    else:
+        ig = np.load(f'F:/maryam_sh/integrated_grad/Ig_oversampling_29p.npy')
 
     pos_elec_best = np.zeros((len(ig), len(ig[0]) - event_id_f))
     label_elec_best = np.zeros((len(ig), len(ig[0]) - event_id_f), dtype='U30')
@@ -61,13 +73,24 @@ def plot_histogram(event_id_f, num_best_elec):
         count_label.extend(np.array(Counter(label_elec_best[patient, :]).most_common())[0:num_best_elec, 0].tolist())
 
     print(Counter(count_label))
+
     fig, ax = plt.subplots(dpi=300)
     color_list = ['yellow', 'cyan', 'deeppink', 'lime', 'steelblue', 'purple', 'violet', 'darkgray', 'orangered',
                   'forestgreen', 'navy', 'forestgreen', 'blue', 'violet', 'red', 'brown', 'green', 'gray', 'darkblue']
 
-    for i in range(10):
-        plt.bar(i, Counter(count_label).most_common()[i][1], color=color_list[i], ecolor='blue', capsize=3,
-                label=Counter(count_label).most_common()[i][0])
+    if del_lobe:
+        list_lobe = ['superiortemporal', 'rostralmiddlefrontal', 'middletemporal', 'postcentral',
+                     'precentral', 'caudalmiddlefrontal', 'parsopercularis', 'inferiortemporal',
+                     'supramarginal', 'superiorfrontal']
+        count = Counter(count_label)
+        count.update({'superiortemporal': 0})
+        for i, lobe in enumerate(list_lobe):
+            plt.bar(i, Counter(count_label)[lobe], color=color_list[i], ecolor='blue', capsize=3, label=lobe)
+
+    else:
+        for i in range(10):
+            plt.bar(i, Counter(count_label).most_common()[i][1], color=color_list[i], ecolor='blue', capsize=3,
+                    label=Counter(count_label).most_common()[i][0])
 
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
@@ -77,9 +100,14 @@ def plot_histogram(event_id_f, num_best_elec):
     plt.ylabel('#Patients')
     plt.xlabel('Valuable lobes')
     # plt.title(f'Histogram significant electrodes across 29 patients for {len(ig[0]) - event_id_f} events', fontsize=9)
-    plt.savefig(f'F:/maryam_sh/integrated_grad/hist_29p.png')
-    plt.savefig(f'F:/maryam_sh/integrated_grad/hist_29p.svg')
-    print('end')
+    plt.tight_layout()
+    if del_lobe:
+        plt.savefig(f'F:/maryam_sh/integrated_grad/hist_29p_del.png')
+        plt.savefig(f'F:/maryam_sh/integrated_grad/hist_29p_del.svg')
+    else:
+        plt.savefig(f'F:/maryam_sh/integrated_grad/hist_29p.png')
+        plt.savefig(f'F:/maryam_sh/integrated_grad/hist_29p.svg')
+
 
 
 def plot_hist_seperate(num_best_elec):
@@ -225,7 +253,7 @@ def plot_heatmap_best_lobe():
 
 # plot_elec_point(patient=0)
 # plot_heatmap_per_patient(patient_id=0, trial_id=[0, 73, 89])
-# plot_histogram(event_id_f=0, num_best_elec=3)
+# plot_histogram(event_id_f=0, num_best_elec=3, del_lobe=False)
 # plot_markers_heatmap(patient=13, trial_id=[0, 73, 89], T=40)
 # plot_hist_seperate(num_best_elec=1)
 # find_best_lobe()

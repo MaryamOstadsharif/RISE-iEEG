@@ -81,10 +81,9 @@ settings = {
     'type_balancing': 'no_balancing',
     # Max number of channels for dataset 'audio_visual':164, for dataset 'music_reconstruction':250, dataset 'HTNet':128
     'n_channels_all': 128,
-    # use transfer learning, for 'Unseen_patient': True, 'Same_patient': False
-    'use_transfer': False,
-    # nuber of patients for test in 'Unseen_patient' scenario
-    # path of pretrained model
+    # Whether to use 'Unseen_patient' scenario
+    'Unseen_patient': False,
+    'del_temporal_lobe': False
 }
 
 paths = Paths(settings)

@@ -122,19 +122,18 @@ def folds_choose(settings, labels, num_events, num_minority, num_majority, rando
 
 
 def balance(x_train_all, y_train):
-    """Balance the dataset using SMOTE."""
-    oversample = SMOTE()
     num_majority_class = Counter(y_train).most_common()[0][1]
-    x_all_resample = []
-
+    num_minority_class = Counter(y_train).most_common()[1][1]
+    inds_tmp_orig = np.arange(0, len(y_train))
+    inds_tmp = inds_tmp_orig[y_train == Counter(y_train).most_common()[1][0]]
+    inds_tmp = list(inds_tmp) * ((num_majority_class // len(inds_tmp)) + 1)
+    y_train = np.concatenate((y_train, y_train[inds_tmp[:num_majority_class - num_minority_class]]), axis=0)
     for i in range(len(x_train_all)):
         print("\n Input_", str(i))
-        x_resample = np.zeros((num_majority_class * 2, x_train_all[i].shape[1], x_train_all[i].shape[2]))
-        for ch in range(x_train_all[i].shape[1]):
-            x_resample[:, ch, :], y_train_res = oversample.fit_resample(x_train_all[i][:, ch, :], y_train)
-        x_all_resample.append(x_resample)
-    return x_all_resample, y_train_res
+        x_train_all[i] = np.concatenate(
+            (x_train_all[i], x_train_all[i][inds_tmp[:num_majority_class - num_minority_class], :, :]), axis=0)
 
+    return x_train_all, y_train
 
 def zeropad_data(x_train_all, x_test_all, x_val_all, num_input):
     """Zero-pad data"""
@@ -156,3 +155,17 @@ def zeropad_data(x_train_all, x_test_all, x_val_all, num_input):
         x_val_zero_all.append(x_val_zero)
 
     return x_train_zero_all, x_test_zero_all, x_val_zero_all
+
+
+def del_temporal_lobe(path, data, task):
+    with open(path.path_processed_data  + task + '/channel_name_list.pkl', 'rb') as f:
+        ch = pkl.load(f)
+
+    for patient in range(29):
+        del_ind = []
+        for pos, channel in enumerate(ch[patient]):
+            if channel[7:] == 'superiortemporal':
+                del_ind.append(pos)
+        data[patient] = np.delete(data[patient], del_ind, axis=1)
+
+    return data

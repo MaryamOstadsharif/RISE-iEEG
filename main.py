@@ -6,7 +6,7 @@ os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # specify GPU to use
 
 # set device
-device = 'navid'
+device = 'system_lab'
 if device.lower() == 'navid':
     processed_data_path = 'D:/Datasets/'
 elif device.lower() == 'maryam':
@@ -22,7 +22,7 @@ else:
 # Define settings for the model and training process
 settings = {
     # Task: 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'move_rest'
-    'task': 'move_rest',
+    'task': 'Singing_Music',
     # number of folds
     'n_folds': 10, # Use one patient out cross-validation, set n_folds to 1
     # set hyperparameter
@@ -50,16 +50,17 @@ settings = {
     'st_num_patient': 0,
     # number of patient for dataset 'audio_visual':51, for dataset 'music_reconstruction':29, for dataset 'move_rest':12
     # Number of patients (Audio Visual: 51, Music Reconstruction: 29, Upper-Limb Movement: 12)
-    'num_patient': 12,
+    'num_patient': 29,
     # Whether to use one patient out cross-validation
     'one_patient_out': False,
     # # Type of data balancing ('move_rest': 'no_balancing', 'Singing_Music':over_sampling,
     # 'Speech_Music':over_sampling, 'Question_Answer':over_sampling)
-    'type_balancing': 'no_balancing',
+    'type_balancing': 'over_sampling',
     # # Max number of channels ('Audio Visual':164, 'Music Reconstruction':250, 'Upper-Limb Movement':128)
-    'n_channels_all': 128,
+    'n_channels_all': 250,
     # Whether to use 'Unseen_patient' scenario
-    'Unseen_patient': False
+    'Unseen_patient': False,
+    'del_temporal_lobe': True
 }
 
 # Initialize paths

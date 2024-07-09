@@ -180,9 +180,19 @@ class MultiPatient_model:
         # Set the random seed
         np.random.seed(rand_seed)
 
-        # Load the input data and labels
-        data_all_input, labels = load_data(path=self.path,
-                                           settings=self.settings)
+        if self.settings['del_temporal_lobe']:
+            # Load the input data and labels
+            data_all_input_orig, labels = load_data(path=self.path,
+                                                    settings=self.settings)
+            # delete Superior temporal lobe data
+            data_all_input = del_temporal_lobe(path=self.path,
+                                               data=data_all_input_orig,
+                                               task=self.settings['task'])
+        
+        else:
+            # Load the input data and labels
+            data_all_input, labels = load_data(path=self.path,
+                                               settings=self.settings)
 
         # Choose indices for training, validation, and testing sets
         inds_all_train, inds_all_val, inds_all_test = folds_choose(settings=self.settings,
