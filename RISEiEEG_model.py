@@ -10,7 +10,7 @@ import tensorflow as tf
 from keras import regularizers
 
 
-def ECoGNet(settings, nb_classes, Chans, Samples, num_input, norm_rate=0.25):
+def RISEiEEG(settings, nb_classes, Chans, Samples, num_input, norm_rate=0.25):
     """
     Constructs the ECoGNet model.
 

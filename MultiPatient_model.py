@@ -5,7 +5,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from sklearn.metrics import precision_recall_fscore_support
 from collections import Counter
 import numpy as np
-from ECoGNet_model import *
+from RISEiEEG_model import *
 from model_utils import *
 
 tf.compat.v1.disable_eager_execution()
@@ -65,7 +65,7 @@ class MultiPatient_model:
                 num_input = self.settings['num_patient']
 
         # Design the model
-        model = ECoGNet(settings=self.settings,
+        model = RISEiEEG(settings=self.settings,
                         nb_classes=len(np.unique(np.argmax(y_train_all, axis=1))),
                         Chans=[X_train_all[i].shape[-1] for i in range(len(X_train_all))],
                         Samples=X_train_all[0].shape[2],
