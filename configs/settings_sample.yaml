@@ -1,0 +1,38 @@
+
+##  Dataset Settings:
+
+task: 'Singing_Music' # Task options: 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'move_rest'
+st_num_patient: 0     # Index of the first patient
+num_patient: 29       # Number of patients (Audio Visual: 51, Music Reconstruction: 29, Upper-Limb Movement: 12)
+n_channels_all: 250   # Max number of channels ('Audio Visual': 164, 'Music Reconstruction': 250, 'Upper-Limb Movement': 128)
+
+##  Model Settings:
+hyper_param:
+  F1: 5
+  dropoutRate: 0.542
+  kernLength: 60
+  kernLength_sep: 88
+  dropoutType: 'Dropout'
+  D: 2
+n_ROI: 20       # Number of Regions of Interest
+coef_reg: 0.01  # Regularization coefficient
+
+
+## Evaluation Settings:
+n_folds: 10                     # number of folds (Use one patient out cross-validation, set n_folds to 1)
+one_patient_out: False          # Whether to use one patient out cross-validation
+Unseen_patient: False           # Whether to use 'Unseen_patient' scenario
+# Type of data balancing ('move_rest': 'no_balancing', 'Singing_Music': 'over_sampling',
+type_balancing: 'over_sampling' #  Options: 'Speech_Music': 'over_sampling', 'Question_Answer': 'over_sampling')
+debug_mode: false               # if it's true it saves the results in debug folder inside results
+
+
+## Training Settimgs:
+epochs: 300                         # Number of training epochs
+patience: 20                        # Patience for early stopping
+early_stop_monitor: 'val_accuracy'  # Metric to monitor for early stopping
+optimizer: 'adam'                   # Optimizer to use
+loss: 'categorical_crossentropy'    # Loss function
+
+
+del_temporal_lobe: False

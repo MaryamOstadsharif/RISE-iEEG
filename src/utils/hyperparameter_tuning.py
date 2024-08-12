@@ -1,10 +1,9 @@
 from utils import *
 import optuna, joblib, os
-import numpy as np
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # specify GPU to use
-from MultiPatient_model import MultiPatient_model
+from src.model.MultiPatient_model import MultiPatient_model
 
 
 def objective(trial):

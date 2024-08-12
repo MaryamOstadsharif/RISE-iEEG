@@ -1,7 +1,7 @@
 import pickle as pkl
 import numpy as np
 from import_data import *
-from utils import read_time
+from src.utils.utils import read_time
 
 # task : 'speech&music' , 'question&answer' for dataset: 'audio_visual'
 task = 'question&answer'

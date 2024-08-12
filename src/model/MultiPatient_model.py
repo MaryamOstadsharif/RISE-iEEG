@@ -1,12 +1,9 @@
 import warnings
 import time
-import tensorflow as tf
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from sklearn.metrics import precision_recall_fscore_support
-from collections import Counter
-import numpy as np
-from RISEiEEG_model import *
-from model_utils import *
+from src.model.RISEiEEG_model import *
+from src.model.model_utils import *
 
 tf.compat.v1.disable_eager_execution()
 from tensorflow.keras import utils as np_utils
@@ -27,53 +24,62 @@ warnings.simplefilter(action='ignore', category=RuntimeWarning)
 
 class MultiPatient_model:
     def __init__(self, settings, paths):
+        self.epochs = settings.epochs
+        self.one_patient_out = settings.one_patient_out
+        self.patience = settings.patience
         self.path = paths
         self.settings = settings
+        self.num_folds = settings.n_folds
+        self.num_patient = settings.num_patient
+        self.early_stop_monitor = settings.early_stop_monitor
+        self.loss = settings.loss
+        self.optimizer = settings.optimizer
+        self.Unseen_patient = settings.Unseen_patient
 
     def save_result(self):
         # Save various metrics to numpy files
-        np.save(self.path.path_results + 'acc_ECoGNet' + '_' + str(self.settings['n_folds']) + '.npy', self.accs)
-        np.save(self.path.path_results + 'precision_ECoGNet' + '_' + str(self.settings['n_folds']) + '.npy',
+        np.save(self.path.result_path + 'acc_ECoGNet' + '_' + str(self.num_folds) + '.npy', self.accs)
+        np.save(self.path.result_path + 'precision_ECoGNet' + '_' + str(self.num_folds) + '.npy',
                 self.precision)
-        np.save(self.path.path_results + 'recall_ECoGNet' + '_' + str(self.settings['n_folds']) + '.npy', self.recall)
-        np.save(self.path.path_results + 'fscore_ECoGNet' + '_' + str(self.settings['n_folds']) + '.npy', self.fscore)
+        np.save(self.path.result_path + 'recall_ECoGNet' + '_' + str(self.num_folds) + '.npy', self.recall)
+        np.save(self.path.result_path + 'fscore_ECoGNet' + '_' + str(self.num_folds) + '.npy', self.fscore)
 
         # Save per-patient metrics to numpy files
-        np.save(self.path.path_results + 'acc_ECoGNet_each_patient' + '_' + str(self.settings['n_folds']) + '.npy',
+        np.save(self.path.result_path + 'acc_ECoGNet_each_patient' + '_' + str(self.num_folds) + '.npy',
                 self.acc_patient_folds)
         np.save(
-            self.path.path_results + 'precision_ECoGNet_each_patient' + '_' + str(self.settings['n_folds']) + '.npy',
+            self.path.result_path + 'precision_ECoGNet_each_patient' + '_' + str(self.num_folds) + '.npy',
             self.precision_patient_folds)
-        np.save(self.path.path_results + 'recall_ECoGNet_each_patient' + '_' + str(self.settings['n_folds']) + '.npy',
+        np.save(self.path.result_path + 'recall_ECoGNet_each_patient' + '_' + str(self.num_folds) + '.npy',
                 self.recall_patient_folds)
-        np.save(self.path.path_results + 'fscore_ECoGNet_each_patient' + '_' + str(self.settings['n_folds']) + '.npy',
+        np.save(self.path.result_path + 'fscore_ECoGNet_each_patient' + '_' + str(self.num_folds) + '.npy',
                 self.fscore_patient_folds)
 
         # Save the last training epochs to a numpy file
-        np.save(self.path.path_results + 'last_training_epoch' + '_' + str(self.settings['n_folds']) + '.npy',
+        np.save(self.path.result_path + 'last_training_epoch' + '_' + str(self.num_folds) + '.npy',
                 self.last_epochs)
 
     def train_evaluate_model(self, X_train_all, y_train_all, X_val_all, y_val_all, X_test_all, y_test_all, chckpt_path):
 
-        if self.settings['Unseen_patient']:
-            num_input = self.settings['num_patient_test']
-            pretrained_model = tf.keras.models.load_model(self.settings['path_save_model'])
+        if self.Unseen_patient:
+            num_input = self.settings.num_patient_test
+            pretrained_model = tf.keras.models.load_model(self.settings.path_save_model)
         else:
-            if self.settings['one_patient_out']:
-                num_input = self.settings['num_patient'] - 1
+            if self.one_patient_out:
+                num_input = self.num_patient - 1
             else:
-                num_input = self.settings['num_patient']
+                num_input = self.num_patient
 
         # Design the model
         model = RISEiEEG(settings=self.settings,
-                        nb_classes=len(np.unique(np.argmax(y_train_all, axis=1))),
-                        Chans=[X_train_all[i].shape[-1] for i in range(len(X_train_all))],
-                        Samples=X_train_all[0].shape[2],
-                        num_input=num_input)
+                         nb_classes=len(np.unique(np.argmax(y_train_all, axis=1))),
+                         Chans=[X_train_all[i].shape[-1] for i in range(len(X_train_all))],
+                         Samples=X_train_all[0].shape[2],
+                         num_input=num_input)
 
         # Compile the model with specified loss function and optimizer
-        model.compile(loss=self.settings['loss'],
-                      optimizer=self.settings['optimizer'],
+        model.compile(loss=self.loss,
+                      optimizer=self.optimizer,
                       metrics=['accuracy'])
 
         # Set up model checkpointing and early stopping
@@ -82,15 +88,15 @@ class MultiPatient_model:
                                        mode='max',
                                        verbose=1,
                                        save_best_only=True)
-        early_stop = EarlyStopping(monitor=self.settings['early_stop_monitor'],
+        early_stop = EarlyStopping(monitor=self.early_stop_monitor,
                                    mode='max',
-                                   patience=self.settings['patience'],
+                                   patience=self.patience,
                                    verbose=0)
         # start time for training
         t_start = time.time()
 
         # Freeze the last few layers of the pretrained model
-        if self.settings['Unseen_patient']:
+        if self.Unseen_patient:
             for i in range(1, 16):
                 model.layers[-i].set_weights(pretrained_model.layers[-i].get_weights())
                 model.layers[-i].trainable = False
@@ -99,7 +105,7 @@ class MultiPatient_model:
         model_history = model.fit(X_train_all,
                                   y_train_all,
                                   batch_size=16,
-                                  epochs=self.settings['epochs'],
+                                  epochs=self.epochs,
                                   verbose=2,
                                   validation_data=(X_val_all, y_val_all),
                                   callbacks=[checkpointer, early_stop])
@@ -107,8 +113,8 @@ class MultiPatient_model:
         # Measure training time and determine the last epoch
         t_fit = time.time() - t_start
         last_epoch = len(model_history.history['loss'])
-        if last_epoch < self.settings['epochs']:
-            last_epoch -= self.settings['patience']
+        if last_epoch < self.epochs:
+            last_epoch -= self.patience
         print("Last epoch was: ", last_epoch)
 
         # Evaluate the best model
@@ -174,21 +180,21 @@ class MultiPatient_model:
         tf.keras.backend.clear_session()
         print(f"\n F1 score:{fscore_lst[2]}")
         return accs_lst, pre_lst, recall_lst, fscore_lst, acc_patient, pre_patient, recall_patient, fscore_patinet, \
-               np.array([last_epoch, t_fit]), model_history.history
+            np.array([last_epoch, t_fit]), model_history.history
 
     def load_split_data(self):
         # Set the random seed
         np.random.seed(rand_seed)
 
-        if self.settings['del_temporal_lobe']:
+        if self.settings.del_temporal_lobe:
             # Load the input data and labels
             data_all_input_orig, labels = load_data(path=self.path,
                                                     settings=self.settings)
             # delete Superior temporal lobe data
             data_all_input = del_temporal_lobe(path=self.path,
                                                data=data_all_input_orig,
-                                               task=self.settings['task'])
-        
+                                               task=self.settings.task)
+
         else:
             # Load the input data and labels
             data_all_input, labels = load_data(path=self.path,
@@ -203,18 +209,18 @@ class MultiPatient_model:
                                                                    random_seed=rand_seed)
 
         # Initialize arrays to store accuracy, precision, recall, and fscore for each fold
-        self.accs = np.zeros([self.settings['n_folds'], 3])
-        self.precision = np.zeros([self.settings['n_folds'], 3])
-        self.recall = np.zeros([self.settings['n_folds'], 3])
-        self.fscore = np.zeros([self.settings['n_folds'], 3])
-        self.last_epochs = np.zeros([self.settings['n_folds'], 2])
+        self.accs = np.zeros([self.num_folds, 3])
+        self.precision = np.zeros([self.num_folds, 3])
+        self.recall = np.zeros([self.num_folds, 3])
+        self.fscore = np.zeros([self.num_folds, 3])
+        self.last_epochs = np.zeros([self.num_folds, 2])
 
         # Lists to store per-patient metrics for each fold
         self.acc_patient_folds = []
         self.precision_patient_folds = []
         self.recall_patient_folds = []
         self.fscore_patient_folds = []
-        for fold in range(self.settings['n_folds']):
+        for fold in range(self.num_folds):
             print('\n ******************************* procsess in fold ', str(fold), '*******************************')
 
             # Get the indices for the current fold
@@ -231,7 +237,7 @@ class MultiPatient_model:
             y_val = labels[inds_val]
 
             # Balance the training data
-            if self.settings['type_balancing'] == 'over_sampling':
+            if self.settings.type_balancing == 'over_sampling':
                 print(' \n ========================= Balancing Data =========================')
                 X_train_all, y_train = balance(X_train_all, y_train)
 
@@ -256,21 +262,22 @@ class MultiPatient_model:
             X_test_all = [np.expand_dims(X_test_all[i], 1) for i in range(len(X_test_all))]
 
             # Define the checkpoint path for saving the best model
-            chckpt_path = self.path.path_results + 'checkpoint_gen_' + '_fold' + str(fold) + '.h5'
+            chckpt_path = self.path.result_path + 'checkpoint_gen_' + '_fold' + str(fold) + '.h5'
 
             # Train and evaluate the model
             print('\n ========================= Training model =========================')
             accs_lst, pre_lst, recall_lst, fscore_lst, acc_patient, pre_patient, \
-            recall_patient, fscore_patine, last_epoch_tmp, history = self.train_evaluate_model(X_train_all=X_train_all,
-                                                                                               y_train_all=y_train_all,
-                                                                                               X_val_all=X_val_all,
-                                                                                               y_val_all=y_val_all,
-                                                                                               X_test_all=X_test_all,
-                                                                                               y_test_all=y_test_all,
-                                                                                               chckpt_path=chckpt_path)
+                recall_patient, fscore_patine, last_epoch_tmp, history = self.train_evaluate_model(
+                X_train_all=X_train_all,
+                y_train_all=y_train_all,
+                X_val_all=X_val_all,
+                y_val_all=y_val_all,
+                X_test_all=X_test_all,
+                y_test_all=y_test_all,
+                chckpt_path=chckpt_path)
 
             # Save the training history for the current fold
-            np.save(self.path.path_results + 'model_history' + '_' + str(fold) + '.npy', history)
+            np.save(self.path.result_path + 'model_history' + '_' + str(fold) + '.npy', history)
 
             self.acc_patient_folds.append(acc_patient)
             self.precision_patient_folds.append(pre_patient)

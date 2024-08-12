@@ -1,7 +1,7 @@
 import tensorflow as tf
-from model_utils import load_data
+from src.model.model_utils import load_data
 import numpy as np
-from utils import *
+from src.utils.utils import *
 
 
 class IG:

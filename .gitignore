@@ -10,6 +10,9 @@ device_path.json
 configs/settings.json
 data/
 
+configs/device_path.yaml
+configs/settings.yaml
+
 **/__pycache__/
 **/saved_model/
 **/.idea/

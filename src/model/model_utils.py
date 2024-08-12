@@ -17,22 +17,22 @@ def load_data(path, settings):
     """Load and preprocess data for training."""
     print(' ========================= Loading Data =========================')
     data_all_input = []
-    with open(path.path_processed_data +settings['task'] + '/labels.pkl', 'rb') as f:
+    with open(path.preprocessed_dataset_path +settings.task + '/labels.pkl', 'rb') as f:
         label = pkl.load(f)
 
-    if settings['Unseen_patient'] == False:
-        if settings['one_patient_out']:
-            print(f'Out patient is {settings["del_patient"]}')
-            for patient in range(settings['st_num_patient'],settings['st_num_patient']+settings['num_patient']):
-                if patient != settings['del_patient']:
+    if settings.Unseen_patient == False:
+        if settings.one_patient_out:
+            print(f'Out patient is {settings.del_patient}')
+            for patient in range(settings.st_num_patient,settings.st_num_patient+settings.num_patient):
+                if patient != settings.del_patient:
                     print('patient_', str(patient))
-                    with open(path.path_processed_data + settings['task'] + '/patient_' + str(patient + 1) + '_reformat.pkl', 'rb') as f:
+                    with open(path.preprocessed_dataset_path + settings.task + '/patient_' + str(patient + 1) + '_reformat.pkl', 'rb') as f:
                         data_one_patient = pkl.load(f)
                     n_ecog_chans = data_one_patient.shape[1]
 
                     # Pad data to match the required number of channel
                     dat_sh = list(data_one_patient.shape)
-                    dat_sh[1] = settings['n_channels_all']
+                    dat_sh[1] = settings.n_channels_all
                     # Create dataset padded with zeros if less than n_chans_all, or cut down to n_chans_all
                     X_pad = np.zeros(dat_sh)
                     X_pad[:, :n_ecog_chans, ...] = data_one_patient
@@ -40,15 +40,15 @@ def load_data(path, settings):
 
                     data_all_input.append(dat)
         else:
-            for patient in range(settings['num_patient']):
+            for patient in range(settings.num_patient):
                 print('patient_', str(patient))
-                with open(path.path_processed_data + settings['task'] + '/patient_' + str(patient + 1) + '_reformat.pkl', 'rb') as f:
+                with open(path.preprocessed_dataset_path + settings.task + '/patient_' + str(patient + 1) + '_reformat.pkl', 'rb') as f:
                     data_one_patient = pkl.load(f)
                 n_ecog_chans = data_one_patient.shape[1]
 
                 # Pad data to match the required number of channel
                 dat_sh = list(data_one_patient.shape)
-                dat_sh[1] = settings['n_channels_all']
+                dat_sh[1] = settings.n_channels_all
                 # Create dataset padded with zeros if less than n_chans_all, or cut down to n_chans_all
                 X_pad = np.zeros(dat_sh)
                 X_pad[:, :n_ecog_chans, ...] = data_one_patient
@@ -56,16 +56,16 @@ def load_data(path, settings):
 
                 data_all_input.append(dat)
 
-    if settings['Unseen_patient']:
-        for patient in range(settings['st_num_patient'], settings['num_patient_test'] + settings['st_num_patient']):
+    if settings.Unseen_patient:
+        for patient in range(settings.st_num_patient, settings.num_patient_test + settings.st_num_patient):
             print('patient_', str(patient))
-            with open(path.path_processed_data + settings['task'] + '/patient_' + str(patient + 1) + '_reformat.pkl', 'rb') as f:
+            with open(path.preprocessed_dataset_path + settings.task + '/patient_' + str(patient + 1) + '_reformat.pkl', 'rb') as f:
                 data_one_patient = pkl.load(f)
             n_ecog_chans = data_one_patient.shape[1]
 
             # Pad data to match the required number of channel
             dat_sh = list(data_one_patient.shape)
-            dat_sh[1] = settings['n_channels_all']
+            dat_sh[1] = settings.n_channels_all
             # Create dataset padded with zeros if less than n_chans_all, or cut down to n_chans_all
             X_pad = np.zeros(dat_sh)
             X_pad[:, :n_ecog_chans, ...] = data_one_patient
@@ -94,15 +94,15 @@ def folds_choose(settings, labels, num_events, num_minority, num_majority, rando
     inds_all_train, inds_all_val, inds_all_test = [], [], []
     stratified_splitter = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=random_seed)
 
-    if settings['type_balancing'] != 'under_sampling':
+    if settings.type_balancing != 'under_sampling':
         events_order = np.arange(num_events)
-    for fold in range(settings['n_folds']):
-        if settings['type_balancing'] == 'under_sampling':
-            events_order = np.array(select_random_event(num_minority, num_majority, settings['task'], random_seed))
+    for fold in range(settings.n_folds):
+        if settings.type_balancing == 'under_sampling':
+            events_order = np.array(select_random_event(num_minority, num_majority, settings.task, random_seed))
         else:
             np.random.shuffle(events_order)
 
-        if settings['one_patient_out']:
+        if settings.one_patient_out:
             for train_index, val_index in stratified_splitter.split(np.zeros_like(labels[events_order]),
                                                                          labels[events_order]):
                 inds_all_val.append(events_order[val_index])
@@ -158,7 +158,7 @@ def zeropad_data(x_train_all, x_test_all, x_val_all, num_input):
 
 
 def del_temporal_lobe(path, data, task):
-    with open(path.path_processed_data  + task + '/channel_name_list.pkl', 'rb') as f:
+    with open(path.preprocessed_dataset_path  + task + '/channel_name_list.pkl', 'rb') as f:
         ch = pkl.load(f)
 
     for patient in range(29):
