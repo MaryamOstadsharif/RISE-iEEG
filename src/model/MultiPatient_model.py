@@ -4,12 +4,8 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from sklearn.metrics import precision_recall_fscore_support
 from src.model.RISEiEEG_model import *
 from src.model.model_utils import *
-
 tf.compat.v1.disable_eager_execution()
 from tensorflow.keras import utils as np_utils
-
-rand_seed = 1337
-# tf.random.set_seed(rand_seed)
 
 
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -38,28 +34,30 @@ class MultiPatient_model:
 
     def save_result(self):
         # Save various metrics to numpy files
-        np.save(self.path.result_path + 'acc_ECoGNet' + '_' + str(self.num_folds) + '.npy', self.accs)
-        np.save(self.path.result_path + 'precision_ECoGNet' + '_' + str(self.num_folds) + '.npy',
+        np.save(self.path.result_path + 'acc_RISEiEEG' + '_' + str(self.num_folds) + '.npy', self.accs)
+        np.save(self.path.result_path + 'precision_RISEiEEG' + '_' + str(self.num_folds) + '.npy',
                 self.precision)
-        np.save(self.path.result_path + 'recall_ECoGNet' + '_' + str(self.num_folds) + '.npy', self.recall)
-        np.save(self.path.result_path + 'fscore_ECoGNet' + '_' + str(self.num_folds) + '.npy', self.fscore)
+        np.save(self.path.result_path + 'recall_RISEiEEG' + '_' + str(self.num_folds) + '.npy', self.recall)
+        np.save(self.path.result_path + 'fscore_RISEiEEG' + '_' + str(self.num_folds) + '.npy', self.fscore)
 
         # Save per-patient metrics to numpy files
-        np.save(self.path.result_path + 'acc_ECoGNet_each_patient' + '_' + str(self.num_folds) + '.npy',
+        np.save(self.path.result_path + 'acc_RISEiEEG_each_patient' + '_' + str(self.num_folds) + '.npy',
                 self.acc_patient_folds)
         np.save(
-            self.path.result_path + 'precision_ECoGNet_each_patient' + '_' + str(self.num_folds) + '.npy',
+            self.path.result_path + 'precision_RISEiEEG_each_patient' + '_' + str(self.num_folds) + '.npy',
             self.precision_patient_folds)
-        np.save(self.path.result_path + 'recall_ECoGNet_each_patient' + '_' + str(self.num_folds) + '.npy',
+        np.save(self.path.result_path + 'recall_RISEiEEG_each_patient' + '_' + str(self.num_folds) + '.npy',
                 self.recall_patient_folds)
-        np.save(self.path.result_path + 'fscore_ECoGNet_each_patient' + '_' + str(self.num_folds) + '.npy',
+        np.save(self.path.result_path + 'fscore_RISEiEEG_each_patient' + '_' + str(self.num_folds) + '.npy',
                 self.fscore_patient_folds)
 
         # Save the last training epochs to a numpy file
         np.save(self.path.result_path + 'last_training_epoch' + '_' + str(self.num_folds) + '.npy',
                 self.last_epochs)
 
-    def train_evaluate_model(self, X_train_all, y_train_all, X_val_all, y_val_all, X_test_all, y_test_all, chckpt_path):
+    def train_evaluate_model(self, X_train_all, y_train_all, X_val_all, y_val_all, X_test_all, y_test_all, chckpt_path
+                             metrics_compile=['accuracy'], verbos=1, save_best_model=True, mode_regularization='max', batch_size=16,
+    ):
 
         if self.Unseen_patient:
             num_input = self.settings.num_patient_test
@@ -80,18 +78,18 @@ class MultiPatient_model:
         # Compile the model with specified loss function and optimizer
         model.compile(loss=self.loss,
                       optimizer=self.optimizer,
-                      metrics=['accuracy'])
+                      metrics=metrics_compile)
 
         # Set up model checkpointing and early stopping
         checkpointer = ModelCheckpoint(filepath=chckpt_path,
-                                       monitor='val_accuracy',
-                                       mode='max',
-                                       verbose=1,
-                                       save_best_only=True)
+                                       monitor=self.early_stop_monito,
+                                       mode=mode_regularization,
+                                       verbose=verbos,
+                                       save_best_only=save_best_model)
         early_stop = EarlyStopping(monitor=self.early_stop_monitor,
-                                   mode='max',
+                                   mode=mode_regularization,
                                    patience=self.patience,
-                                   verbose=0)
+                                   verbose=verbos)
         # start time for training
         t_start = time.time()
 
@@ -104,9 +102,9 @@ class MultiPatient_model:
         # Train the model
         model_history = model.fit(X_train_all,
                                   y_train_all,
-                                  batch_size=16,
+                                  batch_size=batch_size,
                                   epochs=self.epochs,
-                                  verbose=2,
+                                  verbose=verbos,
                                   validation_data=(X_val_all, y_val_all),
                                   callbacks=[checkpointer, early_stop])
 
@@ -183,8 +181,6 @@ class MultiPatient_model:
             np.array([last_epoch, t_fit]), model_history.history
 
     def load_split_data(self):
-        # Set the random seed
-        np.random.seed(rand_seed)
 
         if self.settings.del_temporal_lobe:
             # Load the input data and labels
@@ -205,8 +201,7 @@ class MultiPatient_model:
                                                                    labels=labels,
                                                                    num_events=data_all_input[0].shape[0],
                                                                    num_minority=Counter(labels).most_common()[1][1],
-                                                                   num_majority=Counter(labels).most_common()[0][1],
-                                                                   random_seed=rand_seed)
+                                                                   num_majority=Counter(labels).most_common()[0][1])
 
         # Initialize arrays to store accuracy, precision, recall, and fscore for each fold
         self.accs = np.zeros([self.num_folds, 3])

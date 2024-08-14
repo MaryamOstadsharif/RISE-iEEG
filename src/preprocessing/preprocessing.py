@@ -3,19 +3,71 @@ import pickle as pkl
 import numpy as np
 import xarray as xr
 from tqdm import tqdm
+import pandas as pd
+from import_data_audio_visual import *
 from collections import Counter
 
+def time_ann(path):
+    r = pd.read_csv(path, sep=";")
+    onset = []
+    offset = []
+    for i in range(len(r.index)):
+        d = r.iloc[i, 0]
+        pos1 = d.find('\t')
+        pos2 = d.rfind('\t')
+        onset.append(eval(d[pos1 + 1:pos2]))
+        offset.append(eval(d[pos2 + 1:]))
+    return onset, offset
+
+def read_time(task, t_min, paths):
+    if task == 'Question_Answer':
+        onset_1, offset_1 = time_ann(path=paths.path_dataset + "/stimuli/annotations/sound/sound_annotation_questions.tsv")
+        onset_all, offset_all = time_ann(path=paths.path_dataset + "/stimuli/annotations/sound/sound_annotation_sentences.tsv")
+
+        # remove onset of question from onset of answer
+        onset_1_int = [int(x) for x in onset_1]
+        offset_1_int = [int(x) for x in offset_1]
+
+        for i in onset_all:
+            if int(i) in onset_1_int:
+                onset_all.remove(i)
+
+        for i in onset_all:
+            if i in onset_1:
+                onset_all.remove(i)
+
+        for i in offset_all:
+            if int(i) in offset_1_int:
+                offset_all.remove(i)
+
+        for i in offset_all:
+            if i in offset_1:
+                offset_all.remove(i)
+
+        onset_0 = onset_all
+        offset_0 = offset_all
+
+    if task == 'Speech_Music':
+        onset_1 = [i for i in np.arange(0, 390, 60)]
+        offset_1 = [i for i in np.arange(30, 420, 60)]
+        onset_0 = [i for i in np.arange(30, 390, 60)]
+        offset_0 = [i for i in np.arange(60, 390, 60)]
+        onset_1[0] = onset_1[0] + t_min
+
+    return onset_1, offset_1, onset_0, offset_0
+
 class DataPreprocessor:
-    def __init__(self, settings):
+    def __init__(self, settings, paths):
         self.settings = settings
+        self.paths = paths
 
     def preprocess_and_save(self):
-        if self.settings['dataset'] == 'audio_visual':
+        if self.settings.task == 'Speech_Music' or self.settings.task == 'Question_Answer':
             self._process_audio_visual()
-        elif self.settings['dataset'] == 'music_reconstruction':
+        elif self.settings.task == 'Singing_Music':
             self._process_music_reconstruction()
-        elif self.settings['dataset'] == 'move_rest':
-            self._process_move_rest()
+        elif self.settings.task == 'move_rest':
+            self._process_upper_limb_movement()
         else:
             raise ValueError("Unsupported dataset: {}".format(self.settings['dataset']))
 
@@ -27,38 +79,37 @@ class DataPreprocessor:
         return None
 
     def _process_audio_visual(self):
-        paths = self.settings['paths']
-        task = self.settings['task']
-        save_path = os.path.join(self.settings['save_path'], task)
+        root_path = os.path.join(self.paths.raw_dataset_path, self.settings.task)
+        save_path = os.path.join(self.paths.preprocessed_dataset_path, self.settings.task)
         os.makedirs(save_path, exist_ok=True)
 
+        # Proceed with processing if preprocessed data does not exist
+        band_all_patient_with_hilbert, _, _ = get_data(root_path, settings=self.settings)
+
+        if self.settings.task == 'Speech_Music':
+            time_1 = np.arange(0, 30, 2)
+            time_0 = np.arange(30, 60, 2)
+            onset_1, onset_0 = [], []
+            for i in range(7):
+                onset_1.extend((time_1 + i * 60).tolist())
+                if i < 6:
+                    onset_0.extend((time_0 + i * 60).tolist())
+            t_min, t_max = 0, 2
+        elif self.settings.task == 'Question_Answer':
+            onset_1, onset_0 = read_time(task=self.settings.task, t_min=0.5, paths=paths)
+            t_min, t_max = 0.5, 2.5
+        else:
+            raise ValueError("Unsupported task: {}".format(self.settings.task))
+
+        onset = onset_1 + onset_0
+        fs = 25
+
         # Check if preprocessed data exists
-        for patient in range(self.settings['num_patient']):
+        for patient in range(self.settings.num_patient):
             file_path = os.path.join(save_path, f'patient_{patient + 1}_reformat.pkl')
             preprocessed_data = self._load_preprocessed_data(file_path)
             if preprocessed_data is not None:
                 continue
-
-            # Proceed with processing if preprocessed data does not exist
-            band_all_patient_with_hilbert, _, _ = get_data(paths, settings=self.settings)
-
-            if task == 'speech&music':
-                time_1 = np.arange(0, 30, 2)
-                time_0 = np.arange(30, 60, 2)
-                onset_1, onset_0 = [], []
-                for i in range(7):
-                    onset_1.extend((time_1 + i * 60).tolist())
-                    if i < 6:
-                        onset_0.extend((time_0 + i * 60).tolist())
-                t_min, t_max = 0, 2
-            elif task == 'question&answer':
-                onset_1, onset_0 = read_time(task=task, t_min=0.5, paths=paths)
-                t_min, t_max = 0.5, 2.5
-            else:
-                raise ValueError("Unsupported task: {}".format(task))
-
-            onset = onset_1 + onset_0
-            fs = 25
 
             print('Reformatting data for patient', str(patient + 1))
             data = band_all_patient_with_hilbert[patient]['gamma'].T
@@ -80,7 +131,8 @@ class DataPreprocessor:
         print('Audio-Visual data preprocessing complete.')
 
     def _process_music_reconstruction(self):
-        with open(self.settings['data_path'], 'rb') as f:
+        root_path = os.path.join(self.paths.raw_dataset_path, self.settings.task)
+        with open(root_path, 'rb') as f:
             data_all_patient = pkl.load(f)
 
         onset_0 = [14, 16, 24, 26, 28, 34, 36, 43, 45, 47, 56, 57, 64, 66, 73, 75]
@@ -88,12 +140,9 @@ class DataPreprocessor:
                   [60, 62, 69, 71] + [i for i in np.arange(81, 189, 2)]
         onset_1[0] += 0.5
         onset = onset_1 + onset_0
-
-        t_min = 0.5
-        t_max = 1.5
+        t_min, t_max = 0.5, 1.5
         fs = 100
-
-        save_path = self.settings['save_path']
+        save_path = os.path.join(self.paths.preprocessed_dataset_path, self.settings.task)
         os.makedirs(save_path, exist_ok=True)
 
         for patient in range(len(data_all_patient)):
@@ -115,12 +164,11 @@ class DataPreprocessor:
 
         print('Music reconstruction data preprocessing complete.')
 
-    def _process_move_rest(self):
-        rootpath = self.settings['root_path']
-        pats_ids_in = self.settings['pats_ids_in']
-        tlim = self.settings['tlim']
-        event_types = self.settings['event_types']
-        save_path = os.path.join(self.settings['save_path'], 'move_rest')
+    def _process_upper_limb_movement(self):
+        rootpath = os.path.join(self.paths.raw_dataset_path, self.settings.task)
+        pats_ids_in = ['EC01', 'EC02', 'EC03', 'EC04', 'EC05', 'EC06', 'EC07', 'EC08', 'EC09', 'EC10', 'EC11', 'EC12']
+        tlim = [-1, 1]
+        save_path = os.path.join(self.paths.preprocessed_dataset_path, self.settings.task)
         os.makedirs(save_path, exist_ok=True)
 
         for j in tqdm(range(len(pats_ids_in))):

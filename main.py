@@ -1,6 +1,7 @@
 from src.utils.utils import *
 from src.model.MultiPatient_model import MultiPatient_model
 from src.settings import Paths, Settings
+from src.preprocessing import *
 
 # Set environment variables to specify which GPU to use
 configure_environment()
@@ -13,6 +14,8 @@ settings.load_settings()
 paths = Paths(settings)
 paths.load_device_paths()
 
+data_preprocessor = DataPreprocessor(settings, paths)
+data_preprocessor.preproces()
 
 if settings.one_patient_out is True:
     for i in range(settings.num_patient):

@@ -88,9 +88,8 @@ def select_random_event(num_minority, num_majority, task, random_seed):
     return inds_ran
 
 
-def folds_choose(settings, labels, num_events, num_minority, num_majority, random_seed):
+def folds_choose(settings, labels, num_events, num_minority, num_majority):
     """Split events into train, validation, and test indices."""
-    np.random.seed(random_seed)
     inds_all_train, inds_all_val, inds_all_test = [], [], []
     stratified_splitter = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=random_seed)
 
