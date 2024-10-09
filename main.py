@@ -15,9 +15,9 @@ settings.load_settings()
 paths = Paths(settings)
 paths.load_device_paths()
 
-# Loading and Preprocessing
-# data_preprocessor = DataPreprocessor(settings, paths)
-# data_preprocessor.preprocess_and_save()
+# Loading and Preprocessing the Data
+data_preprocessor = DataPreprocessor(settings, paths)
+data_all_input, labels = data_preprocessor.load_or_preprocess()
 
 if settings.one_patient_out is True:
     for i in range(settings.num_patient):
@@ -27,7 +27,7 @@ if settings.one_patient_out is True:
         paths.update_result_path(patient=i)
         model = MultiPatient_model(settings=settings,
                                    paths=paths)
-        model.load_split_data(random_seed=42)
+        model.load_split_data(data_all_input, labels, random_seed=42)
 
 elif settings.Unseen_patient:
     for i in range(settings.num_patient):
@@ -43,11 +43,11 @@ elif settings.Unseen_patient:
         paths.update_result_path(patient=i)
         model = MultiPatient_model(settings=settings,
                                    paths=paths)
-        model.load_split_data()
+        model.load_split_data(data_all_input, labels, random_seed=42)
 
 
 else:
     paths.update_result_path(patient=None)
     model = MultiPatient_model(settings=settings,
                                paths=paths)
-    model.load_split_data()
+    model.load_split_data(data_all_input, labels, random_seed=42)

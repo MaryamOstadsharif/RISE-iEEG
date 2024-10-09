@@ -31,7 +31,7 @@ debug_mode: false # if it's true it saves the results in debug folder inside res
 
 
 ## Training options
-epochs: 300 # Number of training epochs
+epochs: 5 # Number of training epochs
 patience: 20 # Patience for early stopping
 early_stop_monitor: 'val_accuracy' # Metric to monitor for early stopping
 optimizer: 'adam' # Optimizer to use

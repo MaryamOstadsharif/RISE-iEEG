@@ -4,6 +4,8 @@ import numpy as np
 import xarray as xr
 from tqdm import tqdm
 import pandas as pd
+
+from .utils import del_temporal_lobe
 from src.preprocessing.import_data_audio_visual import *
 from collections import Counter
 
@@ -56,12 +58,32 @@ def read_time(task, t_min, paths):
 
     return onset_1, offset_1, onset_0, offset_0
 
+import os
+import pickle as pkl
+import numpy as np
+
 class DataPreprocessor:
     def __init__(self, settings, paths):
         self.settings = settings
         self.paths = paths
 
+    def load_or_preprocess(self):
+        """Load preprocessed data if available, otherwise preprocess and save."""
+        # Path to preprocessed data
+        save_path = os.path.join(self.paths.preprocessed_dataset_path, self.settings.task)
+
+        # Check if preprocessed data exists
+        preprocessed_file_path = os.path.join(save_path, 'labels.pkl')
+        if os.path.exists(preprocessed_file_path) and self.settings.load_preprocessed_data:
+            print('Preprocessed data found. Loading data...')
+            return self._load_preprocessed_data(save_path)
+        else:
+            print('Preprocessed data not found or not requested. Preprocessing data...')
+            self.preprocess_and_save()
+            return self._load_preprocessed_data(save_path)
+
     def preprocess_and_save(self):
+        """Preprocess data based on the task and save it."""
         if self.settings.task == 'Speech_Music' or self.settings.task == 'Question_Answer':
             self._process_audio_visual()
         elif self.settings.task == 'Singing_Music':
@@ -69,21 +91,35 @@ class DataPreprocessor:
         elif self.settings.task == 'move_rest':
             self._process_upper_limb_movement()
         else:
-            raise ValueError("Unsupported dataset: {}".format(self.settings['dataset']))
+            raise ValueError(f"Unsupported dataset: {self.settings.task}")
 
-    def _load_preprocessed_data(self, file_path):
-        if os.path.exists(file_path):
-            print(f"Loading preprocessed data from {file_path}")
+    def _load_preprocessed_data(self, save_path):
+        """Load preprocessed data from files."""
+        data_all_input = []
+        for patient in range(self.settings.num_patient):
+            file_path = os.path.join(save_path, f'patient_{patient + 1}_reformat.pkl')
             with open(file_path, 'rb') as f:
-                return pkl.load(f)
-        return None
+                data_all_input.append(pkl.load(f))
+
+        label_file_path = os.path.join(save_path, 'labels.pkl')
+        with open(label_file_path, 'rb') as f:
+            labels = pkl.load(f)
+
+        if self.settings.del_temporal_lobe is True:
+            # delete Superior temporal lobe data
+            print("====== Experimental settings: Superior temporal lobe data is deleted ======")
+            data_all_input = del_temporal_lobe(path=save_path,
+                                               data=data_all_input,
+                                               task=self.settings.task)
+
+        return data_all_input, labels
 
     def _process_audio_visual(self):
+        """Preprocess the audio-visual data."""
         root_path = os.path.join(self.paths.raw_dataset_path, self.settings.task)
         save_path = os.path.join(self.paths.preprocessed_dataset_path, self.settings.task)
         os.makedirs(save_path, exist_ok=True)
 
-        # Proceed with processing if preprocessed data does not exist
         band_all_patient_with_hilbert, _, _ = get_data(root_path, settings=self.settings)
 
         if self.settings.task == 'Speech_Music':
@@ -96,22 +132,21 @@ class DataPreprocessor:
                     onset_0.extend((time_0 + i * 60).tolist())
             t_min, t_max = 0, 2
         elif self.settings.task == 'Question_Answer':
-            onset_1, onset_0 = read_time(task=self.settings.task, t_min=0.5, paths=paths)
+            onset_1, onset_0 = read_time(task=self.settings.task, t_min=0.5, paths=self.paths)
             t_min, t_max = 0.5, 2.5
         else:
-            raise ValueError("Unsupported task: {}".format(self.settings.task))
+            raise ValueError(f"Unsupported task: {self.settings.task}")
 
         onset = onset_1 + onset_0
         fs = 25
 
-        # Check if preprocessed data exists
         for patient in range(self.settings.num_patient):
             file_path = os.path.join(save_path, f'patient_{patient + 1}_reformat.pkl')
             preprocessed_data = self._load_preprocessed_data(file_path)
             if preprocessed_data is not None:
                 continue
 
-            print('Reformatting data for patient', str(patient + 1))
+            print(f'Reformatting data for patient {patient + 1}')
             data = band_all_patient_with_hilbert[patient]['gamma'].T
             data_reformat = np.zeros((len(onset_1) + len(onset_0), data.shape[0], int((t_min + t_max) * fs)))
             for event in range(len(onset)):
@@ -131,6 +166,7 @@ class DataPreprocessor:
         print('Audio-Visual data preprocessing complete.')
 
     def _process_music_reconstruction(self):
+        """Preprocess the music reconstruction data."""
         root_path = os.path.join(self.paths.raw_dataset_path, self.settings.task)
         with open(root_path, 'rb') as f:
             data_all_patient = pkl.load(f)
@@ -151,7 +187,7 @@ class DataPreprocessor:
             if preprocessed_data is not None:
                 continue
 
-            print('Reformatting data for patient', str(patient + 1))
+            print(f'Reformatting data for patient {patient + 1}')
             data = data_all_patient[patient].T
             data_reformat = np.zeros((len(onset_1) + len(onset_0), data.shape[0], int((t_min + t_max) * fs)))
             for event in range(len(onset)):
@@ -165,36 +201,33 @@ class DataPreprocessor:
         print('Music reconstruction data preprocessing complete.')
 
     def _process_upper_limb_movement(self):
+        """Preprocess the upper limb movement data."""
         rootpath = os.path.join(self.paths.raw_dataset_path, self.settings.task)
         pats_ids_in = ['EC01', 'EC02', 'EC03', 'EC04', 'EC05', 'EC06', 'EC07', 'EC08', 'EC09', 'EC10', 'EC11', 'EC12']
         tlim = [-1, 1]
         save_path = os.path.join(self.paths.preprocessed_dataset_path, self.settings.task)
         os.makedirs(save_path, exist_ok=True)
 
-        for j in tqdm(range(len(pats_ids_in))):
+        for j in range(len(pats_ids_in)):
             file_path = os.path.join(save_path, f'patient_{j + 1}_reformat.pkl')
             preprocessed_data = self._load_preprocessed_data(file_path)
             if preprocessed_data is not None:
                 continue
 
+            print(f'Reformatting data for patient {j + 1}')
             pat_curr = pats_ids_in[j]
             ep_data_in = xr.open_dataset(os.path.join(rootpath, pat_curr + '_ecog_data.nc'))
             ep_times = np.asarray(ep_data_in.time)
             time_inds = np.nonzero(np.logical_and(ep_times >= tlim[0], ep_times <= tlim[1]))[0]
             n_ecog_chans = (len(ep_data_in.channels) - 1)
 
-            n_chans_curr = n_ecog_chans
-
             days_all_in = np.asarray(ep_data_in.events)
             days_train_inds = []
             for day_tmp in list(np.unique(days_all_in)):
                 days_train_inds.extend(np.nonzero(days_all_in == day_tmp)[0])
 
-            dat = ep_data_in[dict(events=days_train_inds, channels=slice(0, n_chans_curr),
-                                  time=time_inds)].to_array().values.squeeze()
-            labels = ep_data_in[dict(events=days_train_inds, channels=ep_data_in.channels[-1],
-                                     time=0)].to_array().values.squeeze()
-            labels -= 1
+            dat = ep_data_in[dict(events=days_train_inds, channels=slice(0, n_ecog_chans), time=time_inds)].to_array().values.squeeze()
+            labels = ep_data_in[dict(events=days_train_inds, channels=ep_data_in.channels[-1], time=0)].to_array().values.squeeze() - 1
 
             data_reformat = np.zeros((300, dat.shape[1], dat.shape[2]))
             n = 0
@@ -213,8 +246,8 @@ class DataPreprocessor:
 
         label_save_path = os.path.join(save_path, 'labels.pkl')
         if not os.path.exists(label_save_path):
-            label = np.array([0] * 150 + [1] * 150)
+            labels = np.array([0] * 150 + [1] * 150)
             with open(label_save_path, 'wb') as f:
-                pkl.dump(label, f)
+                pkl.dump(labels, f)
 
         print('Move-rest data preprocessing complete.')

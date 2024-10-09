@@ -179,22 +179,7 @@ class MultiPatient_model:
         return accs_lst, pre_lst, recall_lst, fscore_lst, acc_patient, pre_patient, recall_patient, fscore_patinet, \
             np.array([last_epoch, t_fit]), model_history.history
 
-    def load_split_data(self, random_seed=42):
-
-        if self.settings.del_temporal_lobe:
-            # Load the input data and labels
-            data_all_input_orig, labels = load_data(path=self.path,
-                                                    settings=self.settings)
-            # delete Superior temporal lobe data
-            data_all_input = del_temporal_lobe(path=self.path,
-                                               data=data_all_input_orig,
-                                               task=self.settings.task)
-
-        else:
-            # Load the input data and labels
-            data_all_input, labels = load_data(path=self.path,
-                                               settings=self.settings)
-
+    def load_split_data(self, data_all_input, labels, random_seed=42):
         # Choose indices for training, validation, and testing sets
         inds_all_train, inds_all_val, inds_all_test = folds_choose(settings=self.settings,
                                                                    labels=labels,
