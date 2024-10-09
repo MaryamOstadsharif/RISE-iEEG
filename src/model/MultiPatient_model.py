@@ -55,9 +55,8 @@ class MultiPatient_model:
         np.save(self.path.result_path + 'last_training_epoch' + '_' + str(self.num_folds) + '.npy',
                 self.last_epochs)
 
-    def train_evaluate_model(self, X_train_all, y_train_all, X_val_all, y_val_all, X_test_all, y_test_all, chckpt_path
-                             metrics_compile=['accuracy'], verbos=1, save_best_model=True, mode_regularization='max', batch_size=16,
-    ):
+    def train_evaluate_model(self, X_train_all, y_train_all, X_val_all, y_val_all, X_test_all, y_test_all, chckpt_path,
+                             metrics_compile=['accuracy'], verbos=1, save_best_model=True, mode_regularization='max', batch_size=16):
 
         if self.Unseen_patient:
             num_input = self.settings.num_patient_test
@@ -82,7 +81,7 @@ class MultiPatient_model:
 
         # Set up model checkpointing and early stopping
         checkpointer = ModelCheckpoint(filepath=chckpt_path,
-                                       monitor=self.early_stop_monito,
+                                       monitor=self.early_stop_monitor,
                                        mode=mode_regularization,
                                        verbose=verbos,
                                        save_best_only=save_best_model)
@@ -180,7 +179,7 @@ class MultiPatient_model:
         return accs_lst, pre_lst, recall_lst, fscore_lst, acc_patient, pre_patient, recall_patient, fscore_patinet, \
             np.array([last_epoch, t_fit]), model_history.history
 
-    def load_split_data(self):
+    def load_split_data(self, random_seed=42):
 
         if self.settings.del_temporal_lobe:
             # Load the input data and labels
@@ -201,7 +200,8 @@ class MultiPatient_model:
                                                                    labels=labels,
                                                                    num_events=data_all_input[0].shape[0],
                                                                    num_minority=Counter(labels).most_common()[1][1],
-                                                                   num_majority=Counter(labels).most_common()[0][1])
+                                                                   num_majority=Counter(labels).most_common()[0][1],
+                                                                   random_seed=random_seed)
 
         # Initialize arrays to store accuracy, precision, recall, and fscore for each fold
         self.accs = np.zeros([self.num_folds, 3])

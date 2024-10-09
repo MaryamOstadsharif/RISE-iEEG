@@ -3,15 +3,10 @@ import pickle as pkl
 import numpy as np
 import random
 from collections import Counter
-from mne import set_log_level
-from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import StratifiedShuffleSplit
 
 # Set environment variable for thread management
 os.environ["OMP_NUM_THREADS"] = "1"
-
-# Set log level to suppress unnecessary output from MNE
-set_log_level(verbose='ERROR')
 
 def load_data(path, settings):
     """Load and preprocess data for training."""
@@ -88,7 +83,7 @@ def select_random_event(num_minority, num_majority, task, random_seed):
     return inds_ran
 
 
-def folds_choose(settings, labels, num_events, num_minority, num_majority):
+def folds_choose(settings, labels, num_events, num_minority, num_majority, random_seed=42):
     """Split events into train, validation, and test indices."""
     inds_all_train, inds_all_val, inds_all_test = [], [], []
     stratified_splitter = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=random_seed)

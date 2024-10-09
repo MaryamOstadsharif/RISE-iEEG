@@ -4,7 +4,7 @@ import numpy as np
 import xarray as xr
 from tqdm import tqdm
 import pandas as pd
-from import_data_audio_visual import *
+from src.preprocessing.import_data_audio_visual import *
 from collections import Counter
 
 def time_ann(path):

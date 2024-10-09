@@ -1,3 +1,4 @@
+from src.preprocessing.preprocessing import DataPreprocessor
 from src.utils.utils import *
 from src.model.MultiPatient_model import MultiPatient_model
 from src.settings import Paths, Settings
@@ -14,8 +15,9 @@ settings.load_settings()
 paths = Paths(settings)
 paths.load_device_paths()
 
-data_preprocessor = DataPreprocessor(settings, paths)
-data_preprocessor.preproces()
+# Loading and Preprocessing
+# data_preprocessor = DataPreprocessor(settings, paths)
+# data_preprocessor.preprocess_and_save()
 
 if settings.one_patient_out is True:
     for i in range(settings.num_patient):
@@ -25,7 +27,7 @@ if settings.one_patient_out is True:
         paths.update_result_path(patient=i)
         model = MultiPatient_model(settings=settings,
                                    paths=paths)
-        model.load_split_data()
+        model.load_split_data(random_seed=42)
 
 elif settings.Unseen_patient:
     for i in range(settings.num_patient):

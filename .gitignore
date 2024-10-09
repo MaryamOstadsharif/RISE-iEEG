@@ -13,6 +13,9 @@ data/
 configs/device_path.yaml
 configs/settings.yaml
 
+device_path.yaml
+settings.yaml
+
 **/__pycache__/
 **/saved_model/
 **/.idea/
