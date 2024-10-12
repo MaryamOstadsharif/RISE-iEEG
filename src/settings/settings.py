@@ -233,11 +233,11 @@ class Settings:
             raise ValueError("one_patient_out must be a boolean")
 
     @property
-    def Unseen_patient(self):
+    def unseen_patient(self):
         return self.__Unseen_patient
 
-    @Unseen_patient.setter
-    def Unseen_patient(self, value):
+    @unseen_patient.setter
+    def unseen_patient(self, value):
         if isinstance(value, bool):
             self.__Unseen_patient = value
         else:

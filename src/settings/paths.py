@@ -58,7 +58,7 @@ class Paths:
         self.settings.save_settings(model_path)
 
     def update_result_path(self, patient):
-        if self.settings.one_patient_out or self.settings.Unseen_patient:
+        if self.settings.one_patient_out or self.settings.unseen_patient:
             # Place where we save figures
             self.result_path = self.base_path + str(patient) + '/accuracy/'
             Path(self.result_path).mkdir(parents=True, exist_ok=True)

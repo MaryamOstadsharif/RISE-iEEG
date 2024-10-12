@@ -1,8 +1,7 @@
-from src.preprocessing.preprocessing import DataPreprocessor
+from src.data_handling.preprocessing import DataPreprocessor
 from src.utils.utils import *
 from src.model.MultiPatient_model import MultiPatient_model
 from src.settings import Paths, Settings
-from src.preprocessing import *
 
 # Set environment variables to specify which GPU to use
 configure_environment()
@@ -29,7 +28,7 @@ if settings.one_patient_out is True:
                                    paths=paths)
         model.load_split_data(data_all_input, labels, random_seed=42)
 
-elif settings.Unseen_patient:
+elif settings.unseen_patient:
     for i in range(settings.num_patient):
         settings.st_num_patient = i
         # path of pretrained model

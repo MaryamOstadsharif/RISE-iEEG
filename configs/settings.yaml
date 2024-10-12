@@ -24,7 +24,7 @@ coef_reg: 0.01 # Regularization coefficient
 ## Evaluation
 n_folds: 10  # number of folds (Use one patient out cross-validation, set n_folds to 1)
 one_patient_out: False  # Whether to use one patient out cross-validation
-Unseen_patient: False  # Whether to use 'Unseen_patient' scenario
+unseen_patient: False  # Whether to use 'Unseen_patient' scenario
 # Type of data balancing ('move_rest': 'no_balancing', 'Singing_Music': 'over_sampling',
 type_balancing: 'over_sampling' #  Options: 'Speech_Music': 'over_sampling', 'Question_Answer': 'over_sampling')
 debug_mode: false # if it's true it saves the results in debug folder inside results
