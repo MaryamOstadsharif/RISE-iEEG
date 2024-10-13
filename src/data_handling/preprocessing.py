@@ -13,6 +13,7 @@ class DataPreprocessor:
     def __init__(self, settings, paths):
         self.settings = settings
         self.paths = paths
+        
 
     def load_or_preprocess(self):
         """Load preprocessed data if available, otherwise preprocess and save."""
@@ -47,6 +48,7 @@ class DataPreprocessor:
             file_path = os.path.join(save_path, f'patient_{patient + 1}_reformat.pkl')
             with open(file_path, 'rb') as f:
                 data_all_input.append(pkl.load(f))
+                a = 1
 
         label_file_path = os.path.join(save_path, 'labels.pkl')
         with open(label_file_path, 'rb') as f:
