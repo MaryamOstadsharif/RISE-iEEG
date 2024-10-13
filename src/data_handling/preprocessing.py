@@ -125,10 +125,6 @@ class DataPreprocessor:
 
         for patient in range(self.settings.num_patient):
             file_path = os.path.join(save_path, f'patient_{patient + 1}_reformat.pkl')
-            preprocessed_data = self._load_preprocessed_data(file_path)
-            if preprocessed_data is not None:
-                continue
-
             print(f'Reformatting data for patient {patient + 1}')
             data = band_all_patient_with_hilbert[patient]['gamma'].T
             data_reformat = np.zeros((len(onset_1) + len(onset_0), data.shape[0], int((t_min + t_max) * fs)))
@@ -141,16 +137,16 @@ class DataPreprocessor:
                 pkl.dump(data_reformat, f)
 
         labels = [1] * len(onset_1) + [0] * len(onset_0)
-        label_save_path = os.path.join(save_path, 'label.pkl')
+        label_save_path = os.path.join(save_path, 'labels.pkl')
         if not os.path.exists(label_save_path):
             with open(label_save_path, 'wb') as f:
-                pkl.dump(labels, f)
+                pkl.dump(np.array(labels), f)
 
         print('Audio-Visual data preprocessing complete.')
 
     def _process_music_reconstruction(self):
         """Preprocess the music reconstruction data."""
-        dataset = 'Music_Reconstruction'
+        dataset = 'Music_Reconstruction/data_all_patient.pkl'
         root_path = os.path.join(self.paths.raw_dataset_path, dataset)
         with open(root_path, 'rb') as f:
             data_all_patient = pkl.load(f)
@@ -167,12 +163,8 @@ class DataPreprocessor:
 
         for patient in range(len(data_all_patient)):
             file_path = os.path.join(save_path, f'patient_{patient + 1}_reformat.pkl')
-            preprocessed_data = self._load_preprocessed_data(file_path)
-            if preprocessed_data is not None:
-                continue
-
             print(f'Reformatting data for patient {patient + 1}')
-            data = data_all_patient[patient].T
+            data = data_all_patient[patient]['gamma'].T
             data_reformat = np.zeros((len(onset_1) + len(onset_0), data.shape[0], int((t_min + t_max) * fs)))
             for event in range(len(onset)):
                 start_sample = int((onset[event] - t_min) * fs)
@@ -181,6 +173,10 @@ class DataPreprocessor:
 
             with open(file_path, 'wb') as f:
                 pkl.dump(data_reformat, f)
+        labels = len(onset_1)*[1] + len(onset_0)*[0]
+        file_path = os.path.join(save_path, 'labels.pkl')
+        with open(file_path, 'wb') as f:
+            pkl.dump(np.array(labels), f)
 
         print('Music reconstruction data preprocessing complete.')
 
@@ -195,10 +191,6 @@ class DataPreprocessor:
 
         for j in range(len(pats_ids_in)):
             file_path = os.path.join(save_path, f'patient_{j + 1}_reformat.pkl')
-            preprocessed_data = self._load_preprocessed_data(file_path)
-            if preprocessed_data is not None:
-                continue
-
             print(f'Reformatting data for patient {j + 1}')
             pat_curr = pats_ids_in[j]
             ep_data_in = xr.open_dataset(os.path.join(rootpath, pat_curr + '_ecog_data.nc'))

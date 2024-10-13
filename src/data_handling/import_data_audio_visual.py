@@ -228,22 +228,22 @@ class SubjectDataset(object):
         return band6, band7, self.band_block_means
 
 
-def get_data(paths, settings):
+def get_data(root_path, settings):
     """
     settings should contain number_of_patients, use_only_gamma_band, hilbert
     :param paths:
     :param settings:
     :return:
     """
-    number = settings['num_patient']
+    number = settings.num_patient
 
     # List the selected subjects
-    subjects = mne_bids.get_entity_vals(paths.path_dataset, 'subject')
+    subjects = mne_bids.get_entity_vals(root_path, 'subject')
     selected_subjects = subjects[:number]
 
     # Choose clinical as default aquisition type
     acquisition_types = mne_bids.get_entity_vals(
-        os.path.join(paths.path_dataset, 'sub-' + subjects[0], 'ses-iemu', 'ieeg'),
+        os.path.join(root_path, 'sub-' + subjects[0], 'ses-iemu', 'ieeg'),
         'acquisition')
     acquisition_type = acquisition_types[0]
     print("Selected Acquisition is {}".format(acquisition_type))
@@ -251,10 +251,10 @@ def get_data(paths, settings):
     # Load patients data
     band_all_patient_with_hilbert, band_all_patient_without_hilbert, subject_list, channel_names_list = [], [], [], []
     for subject in selected_subjects:
-        if 'iemu' in mne_bids.get_entity_vals(os.path.join(paths.path_dataset, 'sub-' + subject), 'session'):
+        if 'iemu' in mne_bids.get_entity_vals(os.path.join(root_path, 'sub-' + subject), 'session'):
             print("\n =================================== \n"
                   "Patient {} from {}".format(subject, len(selected_subjects)))
-            subject_data = SubjectDataset(paths.path_dataset, subject, acquisition=acquisition_type)
+            subject_data = SubjectDataset(root_path, subject, acquisition=acquisition_type)
             # car: common average reference
             raw_car = subject_data.preprocess()
             events, events_id = subject_data.extract_events()
