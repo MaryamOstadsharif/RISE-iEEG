@@ -235,7 +235,7 @@ def get_data(paths, settings):
     :param settings:
     :return:
     """
-    number = settings['number_of_patients']
+    number = settings['num_patient']
 
     # List the selected subjects
     subjects = mne_bids.get_entity_vals(paths.path_dataset, 'subject')
@@ -254,93 +254,15 @@ def get_data(paths, settings):
         if 'iemu' in mne_bids.get_entity_vals(os.path.join(paths.path_dataset, 'sub-' + subject), 'session'):
             print("\n =================================== \n"
                   "Patient {} from {}".format(subject, len(selected_subjects)))
-            if settings['load_preprocessed_data'] is False:
-                subject_data = SubjectDataset(paths.path_dataset, subject, acquisition=acquisition_type)
-                # car: common average reference
-                raw_car = subject_data.preprocess()
-                events, events_id = subject_data.extract_events()
-                band_data_with_hilbert = subject_data.extract_bands(apply_hilbert=True)
-                band_data_without_hilbert = subject_data.extract_bands(apply_hilbert=False)
-                channel_names = raw_car.ch_names
+            subject_data = SubjectDataset(paths.path_dataset, subject, acquisition=acquisition_type)
+            # car: common average reference
+            raw_car = subject_data.preprocess()
+            events, events_id = subject_data.extract_events()
+            band_data_with_hilbert = subject_data.extract_bands(apply_hilbert=True)
+            band_data_without_hilbert = subject_data.extract_bands(apply_hilbert=False)
+            channel_names = raw_car.ch_names
 
-                if settings['save_preprocessed_data'] is True:
-                    file_path_subband_data_with_hilbert = paths.path_processed_data + \
-                                                          'sub{}_sub-bands_data_with_hilbert.pkl'.format(subject)
-                    file_path_subband_data_without_hilbert = paths.path_processed_data + \
-                                                             'sub{}_sub-bands_data_without_hilbert.pkl'.format(subject)
-                    file_path_raw_data = paths.path_processed_data + 'sub{}_raw_car.pkl'.format(subject)
-                    file_path_channel_names = paths.path_processed_data + 'sub{}_channel_names.pkl'.format(subject)
-                    with open(file_path_subband_data_with_hilbert, 'wb') as f:
-                        pkl.dump(band_data_with_hilbert, f)
-                    with open(file_path_subband_data_without_hilbert, 'wb') as f:
-                        pkl.dump(band_data_without_hilbert, f)
-                    with open(file_path_raw_data, 'wb') as f:
-                        pkl.dump(raw_car, f)
-                    with open(file_path_channel_names, 'wb') as f:
-                        pkl.dump(channel_names, f)
-            else:
-                file_path_subband_data_with_hilbert = paths.path_processed_data + \
-                                                      'sub{}_sub-bands_data_with_hilbert.pkl'.format(subject)
-                file_path_subband_data_without_hilbert = paths.path_processed_data + \
-                                                         'sub{}_sub-bands_data_without_hilbert.pkl'.format(subject)
-                file_path_raw_data = paths.path_processed_data + 'sub{}_raw_car.pkl'.format(subject)
-                file_path_channel_names = paths.path_processed_data + 'sub{}_channel_names.pkl'.format(subject)
-                if os.path.isfile(file_path_subband_data_without_hilbert):
-                    # Load the data from the pickle file
-                    with open(file_path_subband_data_with_hilbert, 'rb') as f:
-                        band_data_with_hilbert = pkl.load(f)
-                    with open(file_path_subband_data_without_hilbert, 'rb') as f:
-                        band_data_without_hilbert = pkl.load(f)
-                    # with open(file_path_raw_data, 'rb') as f:
-                    # raw_car = pkl.load(f)
-                    with open(file_path_channel_names, 'rb') as f:
-                        channel_names = pkl.load(f)
-                else:
-                    raise ValueError(f"The file '{file_path_subband_data_without_hilbert}' does not exist. Put "
-                                     f"the data in this directory or"
-                                     f"run the code with load_preprocessed_data=False to generate the data")
             band_all_patient_with_hilbert.append(band_data_with_hilbert)
             band_all_patient_without_hilbert.append(band_data_without_hilbert)
             channel_names_list.append(channel_names)
     return band_all_patient_with_hilbert, band_all_patient_without_hilbert, channel_names_list
-
-
-def load_raw_data(paths, settings):
-    """
-    Load raw data
-    :param paths:
-    :param settings:
-    :return:
-    """
-    number = settings['number_of_patients']
-
-    # List the selected subjects
-    subjects = mne_bids.get_entity_vals(paths.path_dataset, 'subject')
-    selected_subjects = subjects[:number]
-
-    # Choose clinical as default aquisition type
-    acquisition_types = mne_bids.get_entity_vals(
-        os.path.join(paths.path_dataset, 'sub-' + subjects[0], 'ses-iemu', 'ieeg'),
-        'acquisition')
-    acquisition_type = acquisition_types[0]
-    print("Selected Acquisition is {}".format(acquisition_type))
-
-    # Load patients data
-    raw_car_all = []
-    for subject in selected_subjects:
-        if 'iemu' in mne_bids.get_entity_vals(os.path.join(paths.path_dataset, 'sub-' + subject), 'session'):
-            print("\n =================================== \n"
-                  "Patient {} from {}".format(subject, len(selected_subjects)))
-            file_path_raw_data = paths.path_processed_data + 'sub{}_raw_car.pkl'.format(subject)
-            if os.path.isfile(file_path_raw_data):
-                # Load the data from the pickle file
-                with open(file_path_raw_data, 'rb') as f:
-                    raw_car = pkl.load(f)
-
-            else:
-                raise ValueError(
-                    f"The file '{file_path_raw_data}' does not exist. Put the data in this directory or"
-                    f"run the code with load_preprocessed_data=False to generate the data")
-
-            raw_car_all.append(raw_car)
-    return raw_car_all

@@ -1,19 +1,53 @@
-
 import xarray as xr
+from .utils import del_temporal_lobe
+from src.preprocessing.import_data_audio_visual import *
+from collections import Counter
 
+def time_ann(path):
+    r = pd.read_csv(path, sep=";")
+    onset = []
+    offset = []
+    for i in range(len(r.index)):
+        d = r.iloc[i, 0]
+        pos1 = d.find('\t')
+        pos2 = d.rfind('\t')
+        onset.append(eval(d[pos1 + 1:pos2]))
+        offset.append(eval(d[pos2 + 1:]))
+    return onset, offset
 
-from .utils import *
-from .import_data_audio_visual import *
+def read_time(paths):
+    onset_1, offset_1 = time_ann(path=paths.path_dataset + "/stimuli/annotations/sound/sound_annotation_questions.tsv")
+    onset_all, offset_all = time_ann(path=paths.path_dataset + "/stimuli/annotations/sound/sound_annotation_sentences.tsv")
 
-import os
-import pickle as pkl
-import numpy as np
+    # remove onset of question from onset of answer
+    onset_1_int = [int(x) for x in onset_1]
+    offset_1_int = [int(x) for x in offset_1]
+
+    for i in onset_all:
+        if int(i) in onset_1_int:
+            onset_all.remove(i)
+
+    for i in onset_all:
+        if i in onset_1:
+            onset_all.remove(i)
+
+    for i in offset_all:
+        if int(i) in offset_1_int:
+            offset_all.remove(i)
+
+    for i in offset_all:
+        if i in offset_1:
+            offset_all.remove(i)
+
+    onset_0 = onset_all
+    offset_0 = offset_all
+
+    return onset_1, onset_0
 
 class DataPreprocessor:
     def __init__(self, settings, paths):
         self.settings = settings
         self.paths = paths
-        
 
     def load_or_preprocess(self):
         """Load preprocessed data if available, otherwise preprocess and save."""
@@ -48,7 +82,6 @@ class DataPreprocessor:
             file_path = os.path.join(save_path, f'patient_{patient + 1}_reformat.pkl')
             with open(file_path, 'rb') as f:
                 data_all_input.append(pkl.load(f))
-                a = 1
 
         label_file_path = os.path.join(save_path, 'labels.pkl')
         with open(label_file_path, 'rb') as f:
@@ -65,7 +98,8 @@ class DataPreprocessor:
 
     def _process_audio_visual(self):
         """Preprocess the audio-visual data."""
-        root_path = os.path.join(self.paths.raw_dataset_path, self.settings.task)
+        dataset = 'Audio_visual'
+        root_path = os.path.join(self.paths.raw_dataset_path, dataset)
         save_path = os.path.join(self.paths.preprocessed_dataset_path, self.settings.task)
         os.makedirs(save_path, exist_ok=True)
 
@@ -81,7 +115,7 @@ class DataPreprocessor:
                     onset_0.extend((time_0 + i * 60).tolist())
             t_min, t_max = 0, 2
         elif self.settings.task == 'Question_Answer':
-            onset_1, onset_0 = read_time(task=self.settings.task, t_min=0.5, paths=self.paths)
+            onset_1, onset_0 = read_time(paths=self.paths.raw_dataset_path)
             t_min, t_max = 0.5, 2.5
         else:
             raise ValueError(f"Unsupported task: {self.settings.task}")
@@ -116,7 +150,8 @@ class DataPreprocessor:
 
     def _process_music_reconstruction(self):
         """Preprocess the music reconstruction data."""
-        root_path = os.path.join(self.paths.raw_dataset_path, self.settings.task)
+        dataset = 'Music_Reconstruction'
+        root_path = os.path.join(self.paths.raw_dataset_path, dataset)
         with open(root_path, 'rb') as f:
             data_all_patient = pkl.load(f)
 
@@ -151,7 +186,8 @@ class DataPreprocessor:
 
     def _process_upper_limb_movement(self):
         """Preprocess the upper limb movement data."""
-        rootpath = os.path.join(self.paths.raw_dataset_path, self.settings.task)
+        dataset = 'Upper_Limb_Movement'
+        rootpath = os.path.join(self.paths.raw_dataset_path, dataset)
         pats_ids_in = ['EC01', 'EC02', 'EC03', 'EC04', 'EC05', 'EC06', 'EC07', 'EC08', 'EC09', 'EC10', 'EC11', 'EC12']
         tlim = [-1, 1]
         save_path = os.path.join(self.paths.preprocessed_dataset_path, self.settings.task)
