@@ -30,7 +30,7 @@ class MultiPatient_model:
         self.early_stop_monitor = settings.early_stop_monitor
         self.loss = settings.loss
         self.optimizer = settings.optimizer
-        self.Unseen_patient = settings.unseen_patient
+        self.Unseen_patient = settings.Unseen_patient
 
     def save_result(self):
         # Save various metrics to numpy files

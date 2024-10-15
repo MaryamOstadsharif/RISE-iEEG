@@ -1,7 +1,7 @@
 
 ##  Dataset Settings:
 
-task: 'Singing_Music' # Task options: 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'move_rest'
+task: 'Singing_Music' # Task options: 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'Move_Rest'
 st_num_patient: 0     # Index of the first patient
 num_patient: 29       # Number of patients (Audio Visual: 51, Music Reconstruction: 29, Upper-Limb Movement: 12)
 n_channels_all: 250   # Max number of channels ('Audio Visual': 164, 'Music Reconstruction': 250, 'Upper-Limb Movement': 128)

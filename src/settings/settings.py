@@ -10,7 +10,6 @@ class Settings:
         self.__supported_optimizers = ['adam', 'sgd', 'rmsprop']
         self.__supported_losses = ['categorical_crossentropy', 'binary_crossentropy', 'mse']
         self.__supported_dropout_types = ['Dropout', 'AlphaDropout', 'SpatialDropout2D']
-
         self.__task = None
         self.__load_preprocessed_data = None
         self.__st_num_patient = None
@@ -233,11 +232,11 @@ class Settings:
             raise ValueError("one_patient_out must be a boolean")
 
     @property
-    def unseen_patient(self):
+    def Unseen_patient(self):
         return self.__Unseen_patient
 
-    @unseen_patient.setter
-    def unseen_patient(self, value):
+    @Unseen_patient.setter
+    def Unseen_patient(self, value):
         if isinstance(value, bool):
             self.__Unseen_patient = value
         else:
