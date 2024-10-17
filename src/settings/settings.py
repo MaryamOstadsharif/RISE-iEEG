@@ -6,20 +6,19 @@ import warnings
 
 class Settings:
     def __init__(self):
-        self.__supported_tasks = ['Question_Answer', 'Singing_Music', 'Speech_Music', 'move_rest']
+        self.__supported_mode = ['Same_patient', 'Unseen_patient']
+        self.__supported_tasks = ['Question_Answer', 'Singing_Music', 'Speech_Music', 'Move_Rest']
         self.__supported_optimizers = ['adam', 'sgd', 'rmsprop']
         self.__supported_losses = ['categorical_crossentropy', 'binary_crossentropy', 'mse']
         self.__supported_dropout_types = ['Dropout', 'AlphaDropout', 'SpatialDropout2D']
+        self.__mode = None
         self.__task = None
         self.__load_preprocessed_data = None
-        self.__st_num_patient = None
         self.__num_patient = None
-        self.__n_channels_all = None
         self.__n_ROI = None
         self.__coef_reg = None
         self.__n_folds = None
-        self.__one_patient_out = None
-        self.__Unseen_patient = None
+        self.__inner_fold = None
         self.__type_balancing = None
         self.__debug_mode = None
         self.__epochs = None
@@ -36,7 +35,6 @@ class Settings:
                               'D': 2}
 
         self.del_patient = None
-        self.num_patient_test = None
 
     def load_settings(self):
         """
@@ -73,16 +71,14 @@ class Settings:
         :param file_path: Path where the YAML file will be saved.
         """
         settings_dict = {
+            'mode': self.__mode,
             'task': self.__task,
             'load_preprocessed_data': self.__load_preprocessed_data,
-            'st_num_patient': self.__st_num_patient,
             'num_patient': self.__num_patient,
-            'n_channels_all': self.__n_channels_all,
             'n_ROI': self.__n_ROI,
             'coef_reg': self.__coef_reg,
             'n_folds': self.__n_folds,
-            'one_patient_out': self.__one_patient_out,
-            'Unseen_patient': self.__Unseen_patient,
+            'inner_fold': self.__inner_fold,
             'type_balancing': self.__type_balancing,
             'debug_mode': self.__debug_mode,
             'epochs': self.__epochs,
@@ -133,6 +129,17 @@ class Settings:
         self.__hyper_param = value
 
     @property
+    def mode(self):
+        return self.__mode
+
+    @mode.setter
+    def mode(self, value):
+        if value in self.__supported_mode:
+            self.__mode = value
+        else:
+            raise ValueError(f"Task should be one of {self.__supported_mode}")
+
+    @property
     def task(self):
         return self.__task
 
@@ -154,16 +161,6 @@ class Settings:
         else:
             raise ValueError("load_preprocessed_data must be a boolean")
 
-    @property
-    def st_num_patient(self):
-        return self.__st_num_patient
-
-    @st_num_patient.setter
-    def st_num_patient(self, value):
-        if isinstance(value, int) and value >= 0:
-            self.__st_num_patient = value
-        else:
-            raise ValueError("st_num_patient must be a non-negative integer")
 
     @property
     def num_patient(self):
@@ -176,16 +173,6 @@ class Settings:
         else:
             raise ValueError("num_patient must be a positive integer")
 
-    @property
-    def n_channels_all(self):
-        return self.__n_channels_all
-
-    @n_channels_all.setter
-    def n_channels_all(self, value):
-        if isinstance(value, int) and value > 0:
-            self.__n_channels_all = value
-        else:
-            raise ValueError("n_channels_all must be a positive integer")
 
     @property
     def n_ROI(self):
@@ -221,26 +208,16 @@ class Settings:
             raise ValueError("n_folds must be a positive integer")
 
     @property
-    def one_patient_out(self):
-        return self.__one_patient_out
+    def inner_fold(self):
+        return self.__inner_fold
 
-    @one_patient_out.setter
-    def one_patient_out(self, value):
-        if isinstance(value, bool):
-            self.__one_patient_out = value
+    @inner_fold.setter
+    def inner_fold(self, value):
+        if isinstance(value, int) and value > 0:
+            self.__inner_fold = value
         else:
-            raise ValueError("one_patient_out must be a boolean")
+            raise ValueError("n_folds must be a positive integer")
 
-    @property
-    def Unseen_patient(self):
-        return self.__Unseen_patient
-
-    @Unseen_patient.setter
-    def Unseen_patient(self, value):
-        if isinstance(value, bool):
-            self.__Unseen_patient = value
-        else:
-            raise ValueError("Unseen_patient must be a boolean")
 
     @property
     def type_balancing(self):

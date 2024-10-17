@@ -1,11 +1,10 @@
 
 ##  Data set
 
-task: 'Speech_Music' # Task options: 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'Move_Rest'
-load_preprocessed_data: False
-st_num_patient: 0 # Index of the first patient
-num_patient: 2 # Number of patients (Audio Visual: 51, Music Reconstruction: 29, Upper-Limb Movement: 12)
-n_channels_all: 250 # Max number of channels ('Audio Visual': 164, 'Music Reconstruction': 250, 'Upper-Limb Movement': 128)
+mode: 'Unseen_patient' # mode option: 'Same_patient' & 'Unseen_patient'
+task: 'Move_Rest' # Task options: 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'Move_Rest'
+load_preprocessed_data: True
+num_patient: 12 # Number of patients (Audio Visual: 51, Music Reconstruction: 29, Upper-Limb Movement: 12)
 
 ##  Model Settings:
 hyper_param:
@@ -22,13 +21,11 @@ coef_reg: 0.01 # Regularization coefficient
 
 
 ## Evaluation
-n_folds: 10  # number of folds (Use one patient out cross-validation, set n_folds to 1)
-one_patient_out: False  # Whether to use one patient out cross-validation
-Unseen_patient: False  # Whether to use 'Unseen_patient' scenario
+n_folds: 12  # number of folds (Use one patient out cross-validation, set n_folds to 1)
+inner_fold: 3
 # Type of data balancing ('move_rest': 'no_balancing', 'Singing_Music': 'over_sampling',
-type_balancing: 'over_sampling' #  Options: 'Speech_Music': 'over_sampling', 'Question_Answer': 'over_sampling')
+type_balancing: 'no_balancing' #  Options: 'Speech_Music': 'over_sampling', 'Question_Answer': 'over_sampling')
 debug_mode: false # if it's true it saves the results in debug folder inside results
-
 
 ## Training options
 epochs: 5 # Number of training epochs

@@ -3,7 +3,7 @@ import optuna, joblib, os
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # specify GPU to use
-from src.model.MultiPatient_model import MultiPatient_model
+from src.model.MultiPatientModel import MultipatientModel
 
 
 def objective(trial):
@@ -35,8 +35,8 @@ def objective(trial):
     params['settings']['hyper_param'].update({'dropoutType': trial.suggest_categorical("dropoutType",
                                                                         params['settings']['hyper_param']['dropoutType'])})
 
-    model = MultiPatient_model(settings=params['settings'],
-                               paths=params['paths'])
+    model = MultipatientModel(settings=params['settings'],
+                              paths=params['paths'])
 
     return model.load_split_data()
 

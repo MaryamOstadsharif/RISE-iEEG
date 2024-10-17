@@ -70,7 +70,7 @@ class DataPreprocessor:
             self._process_audio_visual()
         elif self.settings.task == 'Singing_Music':
             self._process_music_reconstruction()
-        elif self.settings.task == 'move_rest':
+        elif self.settings.task == 'Move_Rest':
             self._process_upper_limb_movement()
         else:
             raise ValueError(f"Unsupported dataset: {self.settings.task}")

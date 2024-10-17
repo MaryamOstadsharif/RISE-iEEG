@@ -1,6 +1,6 @@
 
 raw_dataset_path: "F:/maryam_sh/Datasets/Raw_data/"
-preprocessed_dataset_path: "F:/maryam_sh/Datasets/preprocessed/1/"
+preprocessed_dataset_path: "F:/maryam_sh/Datasets/preprocessed/"
 model_path: "F:/maryam_sh/RISE-iEEG/saved_model"
 
 
