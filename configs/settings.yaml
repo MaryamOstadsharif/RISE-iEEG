@@ -8,15 +8,15 @@ num_patient: 12 # Number of patients (Audio Visual: 51, Music Reconstruction: 29
 
 ##  Model Settings:
 hyper_param:
-  F1: 5
-  dropoutRate: 0.542
-  kernLength: 60
-  kernLength_sep: 88
-  dropoutType: 'Dropout'
+  F1: 12
+  dropoutRate: 0.647
+  kernLength: 40
+  kernLength_sep: 10
+  dropoutType: 'SpatialDropout2D'
   D: 2
 
 
-n_ROI: 20 # Number of Regions of Interest
+n_ROI: 15 # Number of Regions of Interest
 coef_reg: 0.01 # Regularization coefficient
 
 
@@ -28,7 +28,7 @@ type_balancing: 'no_balancing' #  Options: 'Speech_Music': 'over_sampling', 'Que
 debug_mode: false # if it's true it saves the results in debug folder inside results
 
 ## Training options
-epochs: 5 # Number of training epochs
+epochs: 300 # Number of training epochs
 patience: 20 # Patience for early stopping
 early_stop_monitor: 'val_accuracy' # Metric to monitor for early stopping
 optimizer: 'adam' # Optimizer to use

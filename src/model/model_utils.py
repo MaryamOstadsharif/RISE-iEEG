@@ -17,12 +17,12 @@ def folds_choose(settings, labels, stage, num_folds, random_seed):
     events_order = np.arange(len(labels))
     for fold in range(num_folds):
         np.random.shuffle(events_order)
-        if settings.mode == 'Unseen_patient' and stage == 'First train':
+        if settings.mode == 'Unseen_patient' and stage == 'First_train':
             for train_index, val_index in stratified_splitter.split(np.zeros_like(labels[events_order]),
                                                                     labels[events_order]):
                 inds_all_val.append(events_order[val_index])
                 inds_all_train.append(events_order[train_index])
-        if settings.mode == 'Same_patient' or stage == 'Second train':
+        if settings.mode == 'Same_patient' or stage == 'Second_train':
             for train_val_index, test_index in stratified_splitter.split(np.zeros_like(labels[events_order]),
                                                                          labels[events_order]):
                 inds_all_test.append(events_order[test_index])

@@ -6,6 +6,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from sklearn.metrics import precision_recall_fscore_support
 from src.model.RISEiEEG_model import *
 from src.model.model_utils import *
+from sklearn.metrics import roc_curve, roc_auc_score
 
 tf.compat.v1.disable_eager_execution()
 from tensorflow.keras import utils as np_utils
@@ -14,7 +15,14 @@ os.environ["OMP_NUM_THREADS"] = "1"
 if os.environ.get("CUDA_VISIBLE_DEVICES") is None:
     # Choose GPU 0 as a default if not specified (can set this in Python script that calls this)
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
+# import tensorflow as tf
+#
+physical_devices = tf.config.list_physical_devices('GPU')
+if physical_devices:
+    for device in physical_devices:
+        tf.config.experimental.set_memory_growth(device, True)
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=RuntimeWarning)
@@ -67,9 +75,7 @@ class MultiPatientModel:
         return acc, pre, recall, f1score
 
     def train(self, X_train_all, y_train_all, X_val_all, y_val_all, X_test_all, y_test_all, checkpoint_path,
-              metrics_compile=['accuracy'],
-              verbos=1, save_best_model=True, mode_regularization='max',
-              batch_size=16):
+              metrics_compile=['accuracy'], verbos=1, save_best_model=True, mode_regularization='max', batch_size=16):
 
         if self.settings.mode == 'Unseen_patient':
             num_input = self.settings.num_patient - 1
@@ -137,19 +143,21 @@ class MultiPatientModel:
             print('\n ========================= Training model in Second step ==========================')
             pretrained_model = model
             num_input_final = len(X_test_all)
-            stage = 'Second train'
+            stage = 'Second_train'
             ind_train_2s, ind_val_2s, ind_test_2s = folds_choose(settings=self.settings,
                                                                  labels=y_test_all,
                                                                  stage=stage,
                                                                  num_folds=self.settings.inner_fold,
                                                                  random_seed=42)
             for fold in range(self.settings.inner_fold):
+                print(f' \n ========================= Inner Fold {fold} =========================')
                 X_train_2s, y_train_2s, X_val_2s, y_val_2s, X_test_2s, y_test_2s = self.prepare_data(ind_train_2s,
                                                                                                      ind_val_2s,
                                                                                                      ind_test_2s,
-                                                                                                     X_test_all[0],
+                                                                                                     X_test_all,
                                                                                                      y_test_all,
-                                                                                                     fold)
+                                                                                                     fold,
+                                                                                                     stage='Second_train')
 
                 checkpoint_path_2s = self.path.result_path + 'checkpoint_step2_' + '_fold' + str(fold) + '.h5'
 
@@ -204,6 +212,7 @@ class MultiPatientModel:
             acc_lst[2], pre_lst[2], recall_lst[2], f1score_lst[2] = self.evaluate(model, X_test_all, y_test_all)
 
         # Evaluate per-patient metrics
+        fpr, tpr, auc_score = None
         if self.settings.mode == 'Same_patient':
             num_test = X_test_all[0].shape[0] / num_input
             for i in range(num_input):
@@ -211,15 +220,21 @@ class MultiPatientModel:
                 y = y_test_all[:int(num_test)]
                 acc_patient[i], pre_patient[i], recall_patient[i], f1score_patient[i] = self.evaluate(model, x, y)
 
+            # Compute ROC curve
+            fpr, tpr, _ = roc_curve(y_test_all[:, 1], model.predict(X_test_all)[:, 1])
+
+            # Compute AUC (Area Under the Curve)
+            auc_score = roc_auc_score(y_test_all[:, 1], model.predict(X_test_all)[:, 1])
+
         # Clear the session to free up resources
         tf.keras.backend.clear_session()
-        # print(f"\n F1 score:{f1score_lst[2]}")
+        print(f"\n F1 score:{f1score_patient}")
         return acc_lst, pre_lst, recall_lst, f1score_lst, acc_patient, pre_patient, recall_patient, f1score_patient, \
-            model_history.history
+            model_history.history, fpr, tpr, auc_score
 
-    def prepare_data(self, ind_all_train, ind_all_val, ind_all_test, data_all_input, labels, fold):
+    def prepare_data(self, ind_all_train, ind_all_val, ind_all_test, data_all_input, labels, fold, stage):
         # Get the indices for the current fold
-        if self.settings.mode == 'Same_patient':
+        if self.settings.mode == 'Same_patient' or stage == 'Second_train':
             ind_test = ind_all_test[fold]
         ind_val = ind_all_val[fold]
         ind_train = ind_all_train[fold]
@@ -229,7 +244,7 @@ class MultiPatientModel:
         y_train = labels[ind_train]
         X_val_all = [data_all_input[i][ind_val] for i in range(len(data_all_input))]
         y_val = labels[ind_val]
-        if self.settings.mode == 'Same_patient':
+        if self.settings.mode == 'Same_patient' or stage == 'Second_train':
             X_test_all = [data_all_input[i][ind_test] for i in range(len(data_all_input))]
             y_test = labels[ind_test]
         else:
@@ -246,14 +261,17 @@ class MultiPatientModel:
         X_val_all = zeropad_data(X_val_all)
         y_train_all = y_train.tolist() * len(X_train_all)
         y_val_all = y_val.tolist() * len(X_val_all)
-        y_test_all = y_test.tolist() * len(X_test_all)
-        if self.settings.mode == 'Same_patient':
+        if self.settings.mode == 'Same_patient' or stage == 'Second_train':
             X_test_all = zeropad_data(X_test_all)
+            y_test_all = y_test.tolist() * len(X_test_all)
+        else:
+            y_test_all = y_test
 
         # Transpose the data to match the expected input shape
         X_train_all = [np.transpose(X_train_all[i], (0, 2, 1)) for i in range(len(X_train_all))]
         X_val_all = [np.transpose(X_val_all[i], (0, 2, 1)) for i in range(len(X_val_all))]
-        X_test_all = [np.transpose(X_test_all[i], (0, 2, 1)) for i in range(len(X_test_all))]
+        if self.settings.mode == 'Same_patient' or stage == 'Second_train':
+            X_test_all = [np.transpose(X_test_all[i], (0, 2, 1)) for i in range(len(X_test_all))]
 
         # Convert labels to categorical format
         # Expand dimensions
@@ -261,8 +279,9 @@ class MultiPatientModel:
         X_train_all = [np.expand_dims(X_train_all[i], 1) for i in range(len(X_train_all))]
         y_val_all = np_utils.to_categorical(y_val_all)
         X_val_all = [np.expand_dims(X_val_all[i], 1) for i in range(len(X_val_all))]
-        y_test_all = np_utils.to_categorical(y_test_all)
-        X_test_all = [np.expand_dims(X_test_all[i], 1) for i in range(len(X_test_all))]
+        if self.settings.mode == 'Same_patient' or stage == 'Second_train':
+            y_test_all = np_utils.to_categorical(y_test_all)
+            X_test_all = [np.expand_dims(X_test_all[i], 1) for i in range(len(X_test_all))]
 
         return X_train_all, y_train_all, X_val_all, y_val_all, X_test_all, y_test_all
 
@@ -271,7 +290,7 @@ class MultiPatientModel:
         if self.settings.mode == 'Same_patient':
             stage = None
         else:
-            stage = 'First train'
+            stage = 'First_train'
         ind_all_train, ind_all_val, ind_all_test = folds_choose(settings=self.settings,
                                                                 labels=labels,
                                                                 stage=stage,
@@ -297,7 +316,8 @@ class MultiPatientModel:
                                                                                                        ind_all_test,
                                                                                                        data_all_input,
                                                                                                        labels,
-                                                                                                       fold)
+                                                                                                       fold,
+                                                                                                       stage='First_train')
 
             # Define the checkpoint path for saving the best model
             checkpoint_path = self.path.result_path + 'checkpoint_' + '_fold' + str(fold) + '.h5'
@@ -308,13 +328,17 @@ class MultiPatientModel:
             else:
                 print('\n ========================= Training model in First step ==========================')
             acc_lst, pre_lst, recall_lst, f1score_lst, acc_patient, pre_patient, \
-                recall_patient, f1score_patient, history = self.train(X_train_all=X_train_all,
-                                                                      y_train_all=y_train_all,
-                                                                      X_val_all=X_val_all,
-                                                                      y_val_all=y_val_all,
-                                                                      X_test_all=X_test_all,
-                                                                      y_test_all=y_test_all,
-                                                                      checkpoint_path=checkpoint_path)
+                recall_patient, f1score_patient, history, fpr, tpr, auc_score = self.train(X_train_all=X_train_all,
+                                                                                           y_train_all=y_train_all,
+                                                                                           X_val_all=X_val_all,
+                                                                                           y_val_all=y_val_all,
+                                                                                           X_test_all=X_test_all,
+                                                                                           y_test_all=y_test_all,
+                                                                                           checkpoint_path=checkpoint_path)
+
+            # Save the training history for the current fold
+            np.save(self.path.result_path + 'model_history' + '_' + str(fold) + '.npy', history)
+            np.save(self.path.result_path + 'ROC_curve' + '_' + str(fold) + '.npy', [fpr, tpr, auc_score])
 
             # Save the training history for the current fold
             np.save(self.path.result_path + 'model_history' + '_' + str(fold) + '.npy', history)
