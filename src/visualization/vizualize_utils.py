@@ -28,9 +28,6 @@ def plot_box_compare_models(save_path, path_save_comparison_model, path_save_RIS
         f1_score[task][models[0]] = np.load(
             path_save_RISEiEEG_model[task] + '/fscore_' + models[0] + str(num_fold) + '.npy')[:, 2]
 
-    f1_score['Singing_Music']['eegnet_hilb_']+=0.03
-    f1_score['Singing_Music']['rf_'] -= 0.07
-    f1_score['Move_Rest']['eegnet_hilb_']+=0.03
 
     # Create a figure and axis for the plot
     fig, ax = plt.subplots(ncols=2, figsize=(12, 6), dpi=300)
@@ -115,16 +112,6 @@ def scatter_plot_unseen_patient(save_path, path_save_comparison_model, path_save
                 Rieman_acc[i, k] = Rieman_acc_all[np.where(ind_patient == i)]
 
         HTNet_acc_mean = np.mean(HTNet_acc, axis=1)
-        if task == 'Singing_Music':
-            HTNet_acc_mean[6:14] += 0.2
-            HTNet_acc_mean[7] -= 0.1
-            HTNet_acc_mean[17:22] += 0.25
-            HTNet_acc_mean[19] -= 0.1
-            HTNet_acc_mean[[24,28]] += 0.2
-        else:
-            HTNet_acc_mean[[0,5,8,7,10]] += 0.1
-            HTNet_acc_mean[[5,7]] += 0.1
-            RF_acc -= 0.02
         EEGNet_acc_mean = np.mean(EEGNet_acc, axis=1)
         RF_acc_mean = np.mean(RF_acc, axis=1)
         Rieman_acc_mean = np.mean(Rieman_acc, axis=1)
