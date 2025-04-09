@@ -19,9 +19,9 @@ paths.load_device_paths()
 data_preprocessor = DataPreprocessor(settings, paths)
 data_all_input, labels = data_preprocessor.load_or_preprocess()
 
+# Initialize and Run Model with Cross-Validation
 model = MultiPatientModel(settings=settings,
                           paths=paths)
-
 model.cross_validation(data_all_input, labels, random_seed=42)
 
 
