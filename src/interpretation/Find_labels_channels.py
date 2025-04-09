@@ -1,124 +1,163 @@
-from nilearn import datasets
+import os
 import numpy as np
 import nibabel as nib
-from scipy.spatial import distance
 import pickle as pkl
-import nibabel as nib
-import numpy as np
 from nilearn import datasets
+from scipy.spatial import distance
 
 
 def load_atlas():
-    # Load the Harvard-Oxford atlas for example
+    """
+    Load the Harvard-Oxford cortical atlas.
+
+    Returns:
+        - atlas_filename: Path to the atlas image.
+        - atlas_labels: List of region labels.
+    """
     atlas = datasets.fetch_atlas_harvard_oxford('cort-maxprob-thr25-1mm')
-
-    # Fetch the atlas map and labels
-    atlas_filename = atlas.filename
-    atlas_labels = atlas.labels
-    return atlas_filename, atlas_labels
+    return atlas.filename, atlas.labels
 
 
-# Function to convert voxel coordinates to MNI space
-def voxels_to_mni(voxel_coords, affine):
-    # Convert voxel coordinates to homogeneous coordinates
+def voxels_to_mni(voxel_coords: np.ndarray, affine: np.ndarray) -> np.ndarray:
+    """
+    Convert voxel coordinates to MNI space.
+
+    Args:
+        voxel_coords: Voxel coordinates as an (N, 3) array.
+        affine: Affine matrix from NIfTI image.
+
+    Returns:
+        MNI coordinates as an (N, 3) array.
+    """
     homogeneous_voxels = np.column_stack([voxel_coords, np.ones(voxel_coords.shape[0])])
-    # Apply the affine transformation
-    mni_coords = homogeneous_voxels.dot(affine.T)[:, :3]
-    return mni_coords
+    return homogeneous_voxels.dot(affine.T)[:, :3]
 
 
-def find_mni_regions(atlas_filename, atlas_labels):
-    atlas_filename, atlas_labels = load_atlas()
-    # Load atlas image
+def find_mni_regions(atlas_filename: str, atlas_labels: list) -> dict:
+    """
+    Extract MNI coordinates for each region in the atlas.
+
+    Args:
+        atlas_filename: Path to the atlas NIfTI file.
+        atlas_labels: List of region labels.
+
+    Returns:
+        Dictionary mapping each label to its MNI coordinates.
+    """
     atlas_img = nib.load(atlas_filename)
-
-    # Get the atlas data and affine matrix
     atlas_data = atlas_img.get_fdata()
-    affine = atlas_img.affine  # Affine matrix for voxel-to-MNI conversion
+    affine = atlas_img.affine
 
-    # Get the voxel coordinates for each region
-    voxel_coords = {}
     mni_coords = {}
-
     for i, label in enumerate(atlas_labels):
-        if label == "Background":  # skip the background
+        if label == "Background":
             continue
-        # Find voxels belonging to the current label
         region_mask = atlas_data == i
-        coords = np.column_stack(np.where(region_mask))  # Extract voxel coordinates
-
-        # Store voxel coordinates
-        voxel_coords[label] = coords
-
-        # Convert voxel coordinates to MNI space and store them
+        coords = np.column_stack(np.where(region_mask))
         mni_coords[label] = voxels_to_mni(coords, affine)
+
     return mni_coords
 
 
-def find_label_chennels(mni_region_coor):
-    with open('F:/maryam_sh/new_dataset/dataset/move_rest/elec_coor_all_move_rest.pkl', 'rb') as f:
-        elec_coor = pkl.load(f)
+def preprocess_labels(mni_region_coords: dict) -> dict:
+    """
+    Merge region variants by base name (e.g., "Frontal Pole, left" → "Frontal Pole").
 
-    ch_names = []
-    for patient in range(1):
-        print(f'Processing patient {patient}')
-        ch_names_p = []
-        for i in range(elec_coor[patient].shape[0]):
-            dist_all = np.zeros(len(mni_region_coor.keys()))
-            for k, region in enumerate(mni_region_coor):
-                dist_all[k] = np.mean([distance.euclidean(elec_coor[patient][i, :], mni_region_coor[region][m])
-                                       for m in range(mni_region_coor[region].shape[0])])
-            ch_names_p.append(list(mni_region_coor.keys())[np.argmin(dist_all)])
-        ch_names.append(ch_names_p)
-    return ch_names
+    Args:
+        mni_region_coords: Dictionary of region names to MNI coordinates.
 
-def preprocess_labels(mni_region_coords):
-    list_reg = list(mni_region_coords.keys())
-    region_rep = []
-    for reg in list_reg:
-        if ',' in reg:
-            region_rep.append(reg.split(',')[0])
-    region_rep = np.unique(region_rep)
+    Returns:
+        Cleaned dictionary with unified region names.
+    """
+    region_names = list(mni_region_coords.keys())
+    base_names = np.unique([name.split(',')[0] for name in region_names if ',' in name])
 
-    for reg in region_rep:
-        reg_base = []
-        for i in range(len(list_reg)):
-            if list_reg[i].split(',')[0] == reg:
-                reg_base.append(mni_region_coords[list_reg[i]])
-                del mni_region_coords[list_reg[i]]
-        mni_region_coords[reg] = np.concatenate(reg_base)
+    for base in base_names:
+        combined_coords = []
+        to_delete = []
 
-    del_reg = ['Insular Cortex', 'Angular Gyrus', 'Juxtapositional Lobule Cortex (formerly Supplementary Motor Cortex)',
-               'Subcallosal Cortex', 'Paracingulate Gyrus', 'Cingulate Gyrus', 'Precuneous Cortex', 'Cuneal Cortex',
-               'Parahippocampal Gyrus', 'Lingual Gyrus',
-               'Planum Polare', "Heschl's Gyrus (includes H1 and H2)", 'Planum Temporale', 'Supracalcarine Cortex']
+        for name in region_names:
+            if name.startswith(base):
+                combined_coords.append(mni_region_coords[name])
+                to_delete.append(name)
 
-    for reg in del_reg:
-        del mni_region_coords[reg]
+        for name in to_delete:
+            del mni_region_coords[name]
+
+        mni_region_coords[base] = np.concatenate(combined_coords)
+
+    # Optionally remove less informative or irrelevant regions
+    irrelevant_regions = [
+        'Insular Cortex', 'Angular Gyrus',
+        'Juxtapositional Lobule Cortex (formerly Supplementary Motor Cortex)',
+        'Subcallosal Cortex', 'Paracingulate Gyrus', 'Cingulate Gyrus',
+        'Precuneous Cortex', 'Cuneal Cortex', 'Parahippocampal Gyrus', 'Lingual Gyrus',
+        'Planum Polare', "Heschl's Gyrus (includes H1 and H2)",
+        'Planum Temporale', 'Supracalcarine Cortex'
+    ]
+
+    for reg in irrelevant_regions:
+        mni_region_coords.pop(reg, None)
 
     return mni_region_coords
-def find_label_chennels2(mni_region_coor):
-    with open('F:/maryam_sh/new_dataset/dataset/move_rest/elec_coor_all_move_rest.pkl', 'rb') as f:
+
+
+def find_label_channels(mni_region_coords: dict, elec_coor_file: str, use_region_center: bool = True) -> list:
+    """
+    Assign each electrode to the closest brain region based on MNI coordinates.
+
+    Args:
+        mni_region_coords: Dictionary of MNI coordinates per region.
+        elec_coor_file: Path to the pickle file containing electrode coordinates.
+        use_region_center: If True, use region center instead of voxel-wise distance.
+
+    Returns:
+        List of lists containing the closest region name per electrode per patient.
+    """
+    with open(elec_coor_file, 'rb') as f:
         elec_coor = pkl.load(f)
 
-    ch_names = []
-    for patient in range(len(elec_coor)):
-        print(f'Processing patient {patient}')
-        ch_names_p = []
-        for i in range(elec_coor[patient].shape[0]):
-            dist_all = np.zeros(len(mni_region_coor.keys()))
-            for k, region in enumerate(mni_region_coor):
-                center_region = np.mean(mni_region_coor[region], axis=0)
-                dist_all[k] = distance.euclidean(elec_coor[patient][i, :], center_region)
-            ch_names_p.append(list(mni_region_coor.keys())[np.argmin(dist_all)])
-        ch_names.append(ch_names_p)
-    return ch_names
+    ch_names_all = []
+
+    for patient_idx, patient_coords in enumerate(elec_coor):
+        print(f'Processing patient {patient_idx}')
+        ch_names_patient = []
+
+        for ch_coord in patient_coords:
+            distances = []
+
+            for region_name, region_coords in mni_region_coords.items():
+                if use_region_center:
+                    region_center = np.mean(region_coords, axis=0)
+                    dist = distance.euclidean(ch_coord, region_center)
+                else:
+                    dist = np.mean([
+                        distance.euclidean(ch_coord, voxel_coord)
+                        for voxel_coord in region_coords
+                    ])
+                distances.append(dist)
+
+            closest_region = list(mni_region_coords.keys())[np.argmin(distances)]
+            ch_names_patient.append(closest_region)
+
+        ch_names_all.append(ch_names_patient)
+
+    return ch_names_all
 
 
-atlas_filename, atlas_labels = load_atlas()
-mni_region_coords = find_mni_regions(atlas_filename, atlas_labels)
-mni_region_coords = preprocess_labels(mni_region_coords)
-ch_names = find_label_chennels2(mni_region_coords)
+if __name__ == '__main__':
+    # File paths
+    elec_file_path = 'F:/maryam_sh/new_dataset/dataset/move_rest/elec_coor_all_move_rest.pkl'
+    save_path = 'F:/maryam_sh/new_dataset/dataset/move_rest/ch_names.npy'
 
-np.save('F:/maryam_sh/new_dataset/dataset/move_rest/ch_names.npy', ch_names)
-print('end')
+    # Load and process atlas
+    atlas_filename, atlas_labels = load_atlas()
+    mni_region_coords = find_mni_regions(atlas_filename, atlas_labels)
+    mni_region_coords = preprocess_labels(mni_region_coords)
+
+    # Assign regions to electrodes
+    ch_names = find_label_channels(mni_region_coords, elec_file_path, use_region_center=True)
+
+    # Save results
+    np.save(save_path, ch_names)
+    print('Channel labeling completed and saved.')

@@ -7,7 +7,7 @@ import warnings
 class Settings:
     def __init__(self):
         self.__supported_mode = ['Same_patient', 'Unseen_patient']
-        self.__supported_tasks = ['Question_Answer', 'Singing_Music', 'Speech_Music', 'Move_Rest']
+        self.__supported_tasks = ['Singing_Music', 'Move_Rest']
         self.__supported_optimizers = ['adam', 'sgd', 'rmsprop']
         self.__supported_losses = ['categorical_crossentropy', 'binary_crossentropy', 'mse']
         self.__supported_dropout_types = ['Dropout', 'AlphaDropout', 'SpatialDropout2D']

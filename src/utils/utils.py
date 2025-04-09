@@ -6,6 +6,7 @@ import random
 import numpy as np
 import tensorflow as tf
 
+
 def configure_environment():
     # Set environment variables to specify which GPU to use
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -16,4 +17,3 @@ def configure_environment():
     random.seed(seed)
     np.random.seed(seed)
     tf.random.set_seed(seed)
-
