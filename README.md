@@ -9,7 +9,6 @@
 * [Citations](#citations)
 <br/>
 
-
 ## General Information
 RISE-iEEG is a robust neural decoding model designed to overcome inter-subject variability in electrode placement within intracranial EEG (iEEG) data. Traditional models struggle to generalize across patients due to differences in electrode implantation, limiting their practical use. RISE-iEEG addresses this by using a patient-specific projection network that maps neural data into a shared low-dimensional space, allowing a shared classifier to decode signals consistently across subjects—without needing electrode location data. This makes RISE-iEEG well-suited for brain-computer interface and clinical applications, enabling accurate, cross-patient decoding in diverse cognitive and motor tasks.
 
@@ -17,8 +16,8 @@ RISE-iEEG is a robust neural decoding model designed to overcome inter-subject v
 For more details on our work and to cite it in your research, please visit our paper: [See the details in ArXiv, 2024](https://arxiv.org/abs/2408.14477v1). Cite this paper using its [DOI](https://arxiv.org/abs/2408.14477v1).
 
 ## Getting Started
-
-1. Clone this repository to your local machine.
+1. Clone the Repository 
+`git clone https://github.com/MaryamOstadsharif/RISE-iEEG.git`
 
 2. Install the required dependencies. `pip install -r requirements.txt`
 
@@ -35,9 +34,9 @@ This repository is organized as follows:
 
 - `/main.py`: The main script to run.
 
-- `/src/data`: Contains scripts for data loading (`data_loader.py`, `data_preprocessor.py`) to load the data, analyze it and preprocess it.
+- `/src/preprocessing`: Contains scripts for data loading and preprocessing.
 
-- `/src/experiments/`: Contains scripts for different experiments
+- `/src/experiments/`: Contains scripts for different experiments.
   
 - `/src/model/`: Contains the functions required to build, train and evaluate models.
 
@@ -45,10 +44,10 @@ This repository is organized as follows:
 
 - `/src/utils`: Contains utility script `utils.py` for some helper function that are used in code.
 
-- `/visualization`: Contains the `vizualize_utils.py` script for data and result visualization.
+- `/src/interpretation`: Contains script to run the Integrated Gradients method for model interpretation.
+  
+- `src/visualization`: Contains the `vizualize_utils.py` script for data and result visualization.
 <br/>
-
-
 
 ## Citations
 The code contained in this repository for RISE-iEEG is companion to the paper:  
