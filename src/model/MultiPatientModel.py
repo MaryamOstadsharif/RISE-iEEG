@@ -44,25 +44,25 @@ class MultiPatientModel:
 
     def save_result(self):
         # Save various metrics to numpy files
-        np.save(self.path.result_path + 'acc_RISEiEEG' + '_' + str(self.settings.n_folds) + '.npy', self.acc)
-        np.save(self.path.result_path + 'precision_RISEiEEG' + '_' + str(self.settings.n_folds) + '.npy',
+        np.save(self.path.result_path['All_patients'] + 'acc_RISEiEEG' + '_Fold' + str(self.settings.n_folds) + '.npy', self.acc)
+        np.save(self.path.result_path['All_patients'] + 'precision_RISEiEEG' + '_Fold' + str(self.settings.n_folds) + '.npy',
                 self.precision)
-        np.save(self.path.result_path + 'recall_RISEiEEG' + '_' + str(self.settings.n_folds) + '.npy', self.recall)
-        np.save(self.path.result_path + 'f1score_RISEiEEG' + '_' + str(self.settings.n_folds) + '.npy', self.f1score)
+        np.save(self.path.result_path['All_patients'] + 'recall_RISEiEEG' + '_Fold' + str(self.settings.n_folds) + '.npy', self.recall)
+        np.save(self.path.result_path['All_patients'] + 'f1score_RISEiEEG' + '_Fold' + str(self.settings.n_folds) + '.npy', self.f1score)
 
         # Save per-patient metrics to numpy files
-        np.save(self.path.result_path + 'acc_RISEiEEG_each_patient' + '_' + str(self.settings.n_folds) + '.npy',
+        np.save(self.path.result_path['Seperated_patient'] + 'acc_RISEiEEG_each_patient' + '_Fold' + str(self.settings.n_folds) + '.npy',
                 self.acc_per_patient)
         np.save(
-            self.path.result_path + 'precision_RISEiEEG_each_patient' + '_' + str(self.settings.n_folds) + '.npy',
+            self.path.result_path['Seperated_patient'] + 'precision_RISEiEEG_each_patient' + '_Fold' + str(self.settings.n_folds) + '.npy',
             self.precision_per_patient)
-        np.save(self.path.result_path + 'recall_RISEiEEG_each_patient' + '_' + str(self.settings.n_folds) + '.npy',
+        np.save(self.path.result_path['Seperated_patient'] + 'recall_RISEiEEG_each_patient' + '_Fold' + str(self.settings.n_folds) + '.npy',
                 self.recall_per_patient)
-        np.save(self.path.result_path + 'f1score_RISEiEEG_each_patient' + '_' + str(self.settings.n_folds) + '.npy',
+        np.save(self.path.result_path['Seperated_patient'] + 'f1score_RISEiEEG_each_patient' + '_Fold' + str(self.settings.n_folds) + '.npy',
                 self.f1score_per_patient)
 
         # Save the last training epochs to a numpy file
-        np.save(self.path.result_path + 'last_training_epoch' + '_' + str(self.settings.n_folds) + '.npy',
+        np.save(self.path.path_store_model + 'last_training_epoch' + '_Fold' + str(self.settings.n_folds) + '.npy',
                 self.last_epochs)
 
     def evaluate(self, model, x, y):
@@ -159,7 +159,7 @@ class MultiPatientModel:
                                                                                                      fold,
                                                                                                      stage='Second_train')
 
-                checkpoint_path_2s = self.path.result_path + 'checkpoint_step2_' + '_fold' + str(fold) + '.h5'
+                checkpoint_path_2s = self.path.path_store_model + 'checkpoint_step2_' + '_fold' + str(fold) + '.h5'
 
                 model_final = RISEiEEG(settings=self.settings,
                                        nb_classes=len(np.unique(np.argmax(y_train_2s, axis=1))),
@@ -212,7 +212,6 @@ class MultiPatientModel:
             acc_lst[2], pre_lst[2], recall_lst[2], f1score_lst[2] = self.evaluate(model, X_test_all, y_test_all)
 
         # Evaluate per-patient metrics
-        fpr, tpr, auc_score = None
         if self.settings.mode == 'Same_patient':
             num_test = X_test_all[0].shape[0] / num_input
             for i in range(num_input):
@@ -320,7 +319,7 @@ class MultiPatientModel:
                                                                                                        stage='First_train')
 
             # Define the checkpoint path for saving the best model
-            checkpoint_path = self.path.result_path + 'checkpoint_' + '_fold' + str(fold) + '.h5'
+            checkpoint_path = self.path.path_store_model + 'checkpoint_' + '_fold' + str(fold) + '.h5'
 
             # Train and evaluate the model
             if self.settings.mode == 'Same_patient':
@@ -337,11 +336,8 @@ class MultiPatientModel:
                                                                                            checkpoint_path=checkpoint_path)
 
             # Save the training history for the current fold
-            np.save(self.path.result_path + 'model_history' + '_' + str(fold) + '.npy', history)
-            np.save(self.path.result_path + 'ROC_curve' + '_' + str(fold) + '.npy', [fpr, tpr, auc_score])
-
-            # Save the training history for the current fold
-            np.save(self.path.result_path + 'model_history' + '_' + str(fold) + '.npy', history)
+            np.save(self.path.path_store_model + 'model_history' + '_Fold' + str(fold) + '.npy', history)
+            np.save(self.path.result_path['ROC_curves'] + 'ROC_curve' + '_Fold' + str(fold) + '.npy', [fpr, tpr, auc_score])
 
             self.acc_per_patient.append(acc_patient)
             self.precision_per_patient.append(pre_patient)

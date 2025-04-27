@@ -39,7 +39,7 @@ class Paths:
     def create_paths(self):
         dir_path = Path(__file__).resolve().parents[2]
 
-        self.base_path = dir_path / 'results' / self.settings.task / self.settings.type_balancing
+        self.base_path = dir_path / 'results' / self.settings.task
         self.base_path = str(self.base_path) + '/'
 
         if self.debug_mode is False:
@@ -48,28 +48,27 @@ class Paths:
             self.folder_name = 'debug'
         self.base_path = self.base_path + self.folder_name + '/'
 
-        model_path = os.path.join(self.base_path, 'saved_model/')
-        Path(self.base_path).mkdir(parents=True, exist_ok=True)
-        Path(model_path).mkdir(parents=True, exist_ok=True)
+        # model_path = os.path.join(self.base_path, 'saved_model/')
+        # Path(self.base_path).mkdir(parents=True, exist_ok=True)
+        # Path(model_path).mkdir(parents=True, exist_ok=True)
+        #
+        # self.model_path = model_path
+        # self.result_path = self.base_path
+        #
+        # self.settings.save_settings(model_path)
+        # self.result_path = self.base_path + 'Model performance/'
+        # Path(self.result_path).mkdir(parents=True, exist_ok=True)
+        self.result_path = {
+            'Seperated_patient': self.base_path + 'Model performance/Seperated_patient/',
+            'All_patients': self.base_path + 'Model performance/All_patients/',
+            'ROC_curves': self.base_path + 'Model performance/ROC_curves/'
+        }
 
-        self.model_path = model_path
-        self.result_path = self.base_path
+        for path in self.result_path.values():
+            Path(path).mkdir(parents=True, exist_ok=True)
 
-        self.settings.save_settings(model_path)
+        # Place where we save model hyper parameters
+        self.path_store_model = self.base_path + 'saved_models/'
+        Path(self.path_store_model).mkdir(parents=True, exist_ok=True)
 
-    def update_result_path(self, patient):
-        if self.settings.one_patient_out or self.settings.Unseen_patient:
-            # Place where we save figures
-            self.result_path = self.base_path + str(patient) + '/accuracy/'
-            Path(self.result_path).mkdir(parents=True, exist_ok=True)
-            # Place where we save model hyper parameters
-            self.path_store_model = self.base_path + str(patient) + '/hyper_param_set/saved_models/'
-            Path(self.path_store_model).mkdir(parents=True, exist_ok=True)
-        else:
-            self.result_path = self.base_path + 'accuracy/'
-            Path(self.result_path).mkdir(parents=True, exist_ok=True)
-            # Place where we save model hyper parameters
-            self.path_store_model = self.base_path + 'hyper_param_set/saved_models/'
-            Path(self.path_store_model).mkdir(parents=True, exist_ok=True)
-
-        self.settings.save_settings(self.path_store_model)
+        self.settings.save_settings(self.base_path)

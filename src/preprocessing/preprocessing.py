@@ -44,7 +44,7 @@ class DataPreprocessor:
         data_all_input = []
 
         for patient in range(self.settings.num_patient):
-            file_path = os.path.join(save_path, f'patient_{patient + 1}_reformat.pkl')
+            file_path = os.path.join(save_path, f'patient_{patient}_reformat.pkl')
             with open(file_path, 'rb') as f:
                 data_all_input.append(pkl.load(f))
 
@@ -122,7 +122,7 @@ class DataPreprocessor:
         os.makedirs(save_path, exist_ok=True)
 
         for i, patient_id in enumerate(patient_ids):
-            file_path = os.path.join(save_path, f'patient_{i + 1}_reformat.pkl')
+            file_path = os.path.join(save_path, f'patient_{i}_reformat.pkl')
             print(f'Reformatting data for patient {i + 1}')
 
             data_file = os.path.join(root_path, f'{patient_id}_ecog_data.nc')

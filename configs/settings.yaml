@@ -1,10 +1,8 @@
-
 ##  Data set
-
-mode: 'Unseen_patient' # mode option: 'Same_patient' & 'Unseen_patient'
-task: 'Move_Rest' # Task options: 'Question_Answer' & 'Singing_Music' & 'Speech_Music' & 'Move_Rest'
+mode: 'Same_patient' # mode option: 'Same_patient' & 'Unseen_patient'
+task: 'Singing_Music' # Task options: 'Singing_Music' & 'Move_Rest'
 load_preprocessed_data: True
-num_patient: 12 # Number of patients (Audio Visual: 51, Music Reconstruction: 29, Upper-Limb Movement: 12)
+num_patient: 12 # Number of patients (Music Reconstruction: 29, Upper-Limb Movement: 12)
 
 ##  Model Settings:
 hyper_param:
@@ -21,10 +19,10 @@ coef_reg: 0.01 # Regularization coefficient
 
 
 ## Evaluation
-n_folds: 12  # number of folds (Use one patient out cross-validation, set n_folds to 1)
+n_folds: 10  # number of folds (Use one patient out cross-validation, set n_folds to 1)
 inner_fold: 3
-# Type of data balancing ('move_rest': 'no_balancing', 'Singing_Music': 'over_sampling',
-type_balancing: 'no_balancing' #  Options: 'Speech_Music': 'over_sampling', 'Question_Answer': 'over_sampling')
+# Type of data balancing ('move_rest': 'no_balancing', 'Singing_Music': 'over_sampling')
+type_balancing: 'no_balancing'
 debug_mode: false # if it's true it saves the results in debug folder inside results
 
 ## Training options
@@ -33,6 +31,4 @@ patience: 20 # Patience for early stopping
 early_stop_monitor: 'val_accuracy' # Metric to monitor for early stopping
 optimizer: 'adam' # Optimizer to use
 loss: 'categorical_crossentropy' # Loss function
-
-
 del_temporal_lobe: False

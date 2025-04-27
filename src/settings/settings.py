@@ -90,8 +90,8 @@ class Settings:
             'hyper_param': self.__hyper_param
         }
 
-        # with open(file_path, 'w') as yaml_file:
-        #     yaml.dump(settings_dict, yaml_file, default_flow_style=False)
+        with open(file_path + 'settings_model.yaml', 'w') as yaml_file:
+            yaml.dump(settings_dict, yaml_file, default_flow_style=False)
 
     @property
     def hyper_param(self):
