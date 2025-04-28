@@ -208,6 +208,7 @@ class MultiPatientModel:
         acc_lst[1], pre_lst[1], recall_lst[1], f1score_lst[1] = self.evaluate(model, X_val_all, y_val_all)
 
         # Predict and evaluate on the test set
+        fpr, tpr, auc_score = None, None, None
         if self.settings.mode == 'Same_patient':
             acc_lst[2], pre_lst[2], recall_lst[2], f1score_lst[2] = self.evaluate(model, X_test_all, y_test_all)
 

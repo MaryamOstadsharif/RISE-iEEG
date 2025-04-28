@@ -59,9 +59,9 @@ class Paths:
         # self.result_path = self.base_path + 'Model performance/'
         # Path(self.result_path).mkdir(parents=True, exist_ok=True)
         self.result_path = {
-            'Seperated_patient': self.base_path + 'Model performance/Seperated_patient/',
-            'All_patients': self.base_path + 'Model performance/All_patients/',
-            'ROC_curves': self.base_path + 'Model performance/ROC_curves/'
+            'Seperated_patient': self.base_path + 'Model_performance/Seperated_patient/',
+            'All_patients': self.base_path + 'Model_performance/All_patients/',
+            'ROC_curves': self.base_path + 'Model_performance/ROC_curves/'
         }
 
         for path in self.result_path.values():

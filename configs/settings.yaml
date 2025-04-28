@@ -1,6 +1,6 @@
 ##  Data set
-mode: 'Same_patient' # mode option: 'Same_patient' & 'Unseen_patient'
-task: 'Singing_Music' # Task options: 'Singing_Music' & 'Move_Rest'
+mode: 'Unseen_patient' # mode option: 'Same_patient' & 'Unseen_patient'
+task: 'Move_Rest' # Task options: 'Singing_Music' & 'Move_Rest'
 load_preprocessed_data: True
 num_patient: 12 # Number of patients (Music Reconstruction: 29, Upper-Limb Movement: 12)
 
@@ -19,7 +19,7 @@ coef_reg: 0.01 # Regularization coefficient
 
 
 ## Evaluation
-n_folds: 10  # number of folds (Use one patient out cross-validation, set n_folds to 1)
+n_folds: 12  # number of folds (Use one patient out cross-validation, set n_folds to 1)
 inner_fold: 3
 # Type of data balancing ('move_rest': 'no_balancing', 'Singing_Music': 'over_sampling')
 type_balancing: 'no_balancing'
@@ -32,3 +32,5 @@ early_stop_monitor: 'val_accuracy' # Metric to monitor for early stopping
 optimizer: 'adam' # Optimizer to use
 loss: 'categorical_crossentropy' # Loss function
 del_temporal_lobe: False
+
+
