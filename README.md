@@ -14,12 +14,14 @@
 RISE-iEEG is a robust neural decoding model designed to overcome inter-subject variability in electrode placement within intracranial EEG (iEEG) data. Traditional models struggle to generalize across patients due to differences in electrode implantation, limiting their practical use. RISE-iEEG addresses this by using a patient-specific projection network that maps neural data into a shared low-dimensional space, allowing a shared classifier to decode signals consistently across subjects—without needing electrode location data. This makes RISE-iEEG well-suited for brain-computer interface and clinical applications, enabling accurate, cross-patient decoding in diverse cognitive and motor tasks.
 
 ## Reference
-This work has been published in **IEEE Engineering in Medicine and Biology Conference (EMBC) 2025**:
+
+This work has been published in the **IEEE Engineering in Medicine and Biology Conference (EMBC) 2025**:
 
 - IEEE EMBC Paper: https://ieeexplore.ieee.org/document/11252788  
 - DOI: https://doi.org/10.1109/EMBC58623.2025.11252788  
 - arXiv preprint: https://arxiv.org/abs/2408.14477v1  
-Please cite the official IEEE EMBC 2025 publication:
+
+If you use this work, please cite the official IEEE EMBC publication:
 
 ```bibtex
 @inproceedings{ostadsharif2025riseieeg,
