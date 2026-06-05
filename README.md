@@ -20,17 +20,6 @@ This work has been published in **IEEE Engineering in Medicine and Biology Confe
 - DOI: https://doi.org/10.1109/EMBC58623.2025.11252788  
 - arXiv preprint: https://arxiv.org/abs/2408.14477v1  
 
-Please cite the official IEEE EMBC version:
-
-```bibtex
-@inproceedings{ostadsharif2025riseieeg,
-  title     = {RISE-iEEG: Robust to Inter-Subject Electrode Implantation Variability iEEG Classifier},
-  author    = {Ostadsharif, Maryam and others},
-  booktitle = {Proceedings of the IEEE Engineering in Medicine and Biology Conference (EMBC)},
-  year      = {2025},
-  doi       = {10.1109/EMBC58623.2025.11252788}
-}
-
 ## Getting Started
 1. Clone the Repository 
 `git clone https://github.com/MaryamOstadsharif/RISE-iEEG.git`
