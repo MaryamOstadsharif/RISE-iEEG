@@ -1,4 +1,5 @@
-[![arXiv](https://img.shields.io/badge/arXiv-2206.03992-b31b1b.svg)](https://arxiv.org/abs/2408.14477v1)
+[![arXiv](https://img.shields.io/badge/arXiv-2408.14477-b31b1b.svg)](https://arxiv.org/abs/2408.14477v1)
+[![IEEE EMBC](https://img.shields.io/badge/IEEE%20EMBC-2025-blue.svg)](https://ieeexplore.ieee.org/document/11252788)
 # RISE-iEEG: Robust to Inter-Subject Electrodes Implantation Variability iEEG Classifier
 
 ## Table of Contents
@@ -13,7 +14,22 @@
 RISE-iEEG is a robust neural decoding model designed to overcome inter-subject variability in electrode placement within intracranial EEG (iEEG) data. Traditional models struggle to generalize across patients due to differences in electrode implantation, limiting their practical use. RISE-iEEG addresses this by using a patient-specific projection network that maps neural data into a shared low-dimensional space, allowing a shared classifier to decode signals consistently across subjects—without needing electrode location data. This makes RISE-iEEG well-suited for brain-computer interface and clinical applications, enabling accurate, cross-patient decoding in diverse cognitive and motor tasks.
 
 ## Reference
-For more details on our work and to cite it in your research, please visit our paper: [See the details in ArXiv, 2024](https://arxiv.org/abs/2408.14477v1). Cite this paper using its [DOI](https://arxiv.org/abs/2408.14477v1).
+This work has been published in **IEEE Engineering in Medicine and Biology Conference (EMBC) 2025**:
+
+- IEEE EMBC Paper: https://ieeexplore.ieee.org/document/11252788  
+- DOI: https://doi.org/10.1109/EMBC58623.2025.11252788  
+- arXiv preprint: https://arxiv.org/abs/2408.14477v1  
+
+Please cite the official IEEE EMBC version:
+
+```bibtex
+@inproceedings{ostadsharif2025riseieeg,
+  title     = {RISE-iEEG: Robust to Inter-Subject Electrode Implantation Variability iEEG Classifier},
+  author    = {Ostadsharif, Maryam and others},
+  booktitle = {Proceedings of the IEEE Engineering in Medicine and Biology Conference (EMBC)},
+  year      = {2025},
+  doi       = {10.1109/EMBC58623.2025.11252788}
+}
 
 ## Getting Started
 1. Clone the Repository 
