@@ -59,12 +59,14 @@ This repository is organized as follows:
 The code contained in this repository for RISE-iEEG is companion to the paper:  
 
 ```
-@inproceedings{ostadsharif2025riseieeg,
-  title     = {RISE-iEEG: Robust to Inter-Subject Electrode Implantation Variability iEEG Classifier},
-  author    = {Ostadsharif, Maryam and others},
-  booktitle = {Proceedings of the IEEE Engineering in Medicine and Biology Conference (EMBC)},
-  year      = {2025},
-  doi       = {10.1109/EMBC58623.2025.11252788}
+@inproceedings{memar2025rise,
+  title={Rise-ieeg: Robust to inter-subject electrodes implantation variability ieeg classifier},
+  author={Memar, Maryam Ostadsharif and Ziaei, Navid and Nazari, Behzad and Yousefi, Ali},
+  booktitle={2025 47th Annual International Conference of the IEEE Engineering in Medicine and Biology Society (EMBC)},
+  pages={1--7},
+  year={2025},
+  organization={IEEE}
+}
 ```
 which should be cited for academic use of this code.  
 <br/>
